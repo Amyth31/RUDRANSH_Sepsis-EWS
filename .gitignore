@@ -1,0 +1,14 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Model files (large binary - regenerate with train_model.py)
+model/*.pkl
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
