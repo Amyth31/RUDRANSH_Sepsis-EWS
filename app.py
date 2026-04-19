@@ -8,20 +8,12 @@ import pickle, json, os
 import numpy as np
 from urllib import parse, request as urlrequest
 from urllib.error import HTTPError, URLError
+import time
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
 BASE      = os.path.dirname(__file__)
 MODEL_DIR = os.path.join(BASE, 'model')
-
-with open(os.path.join(MODEL_DIR, 'gb_model.pkl'), 'rb') as f:
-    gb_model = pickle.load(f)
-with open(os.path.join(MODEL_DIR, 'rf_model.pkl'), 'rb') as f:
-    rf_model = pickle.load(f)
-with open(os.path.join(MODEL_DIR, 'scaler.pkl'), 'rb') as f:
-    scaler = pickle.load(f)
-with open(os.path.join(MODEL_DIR, 'feature_cols.json')) as f:
-    feature_cols = json.load(f)
 with open(os.path.join(MODEL_DIR, 'metrics.json')) as f:
     metrics = json.load(f)
 
@@ -32,8 +24,30 @@ OVERPASS_ENDPOINTS = [
     'https://overpass.private.coffee/api/interpreter',
     'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
 ]
+gb_model = None
+rf_model = None
+scaler = None
+feature_cols = None
+HOSPITAL_CACHE = {}
+CACHE_TTL_SECONDS = 600
+
+def ensure_prediction_assets():
+    global gb_model, rf_model, scaler, feature_cols
+    if gb_model is None:
+        with open(os.path.join(MODEL_DIR, 'gb_model.pkl'), 'rb') as f:
+            gb_model = pickle.load(f)
+    if rf_model is None:
+        with open(os.path.join(MODEL_DIR, 'rf_model.pkl'), 'rb') as f:
+            rf_model = pickle.load(f)
+    if scaler is None:
+        with open(os.path.join(MODEL_DIR, 'scaler.pkl'), 'rb') as f:
+            scaler = pickle.load(f)
+    if feature_cols is None:
+        with open(os.path.join(MODEL_DIR, 'feature_cols.json')) as f:
+            feature_cols = json.load(f)
 
 def compute_features(vitals_6h):
+    ensure_prediction_assets()
     keys = ['HR','MAP','SBP','Temp','O2Sat','Lactate','Creatinine','Platelets']
     feat = {}
     t = np.arange(6)
@@ -105,6 +119,17 @@ def api_hospitals():
     except ValueError:
         return jsonify({'success': False, 'error': 'Invalid coordinates'}), 400
 
+    cache_key = (round(lat, 3), round(lng, 3))
+    cached = HOSPITAL_CACHE.get(cache_key)
+    now = time.time()
+    if cached and now - cached['timestamp'] < CACHE_TTL_SECONDS:
+        return jsonify({
+            'success': True,
+            'elements': cached['elements'],
+            'source': cached['source'],
+            'cached': True,
+        })
+
     query = (
         f'[out:json][timeout:25];('
         f'node["amenity"="hospital"](around:10000,{lat},{lng});'
@@ -129,12 +154,19 @@ def api_hospitals():
         )
 
         try:
-            with urlrequest.urlopen(req, timeout=30) as response:
+            with urlrequest.urlopen(req, timeout=8) as response:
                 data = json.loads(response.read().decode('utf-8'))
+            elements = data.get('elements', [])
+            HOSPITAL_CACHE[cache_key] = {
+                'timestamp': now,
+                'elements': elements,
+                'source': endpoint,
+            }
             return jsonify({
                 'success': True,
-                'elements': data.get('elements', []),
+                'elements': elements,
                 'source': endpoint,
+                'cached': False,
             })
         except HTTPError as e:
             errors.append(f'{endpoint}: HTTP {e.code}')
