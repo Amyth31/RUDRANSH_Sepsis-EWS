@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: sepsis-alert
+    name: rudransh
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
