@@ -9,6 +9,7 @@ import numpy as np
 from urllib import parse, request as urlrequest
 from urllib.error import HTTPError, URLError
 import time
+import math
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
@@ -57,6 +58,74 @@ def compute_features(vitals_6h):
         feat[f'trend_{k}'] = float(np.polyfit(t, s, 1)[0])
     feat['shock_index'] = feat['mean_HR'] / max(feat['mean_SBP'], 1)
     return np.array([feat[c] for c in feature_cols])
+
+def haversine_km(lat1, lon1, lat2, lon2):
+    r = 6371.0
+    d_lat = math.radians(lat2 - lat1)
+    d_lon = math.radians(lon2 - lon1)
+    a = (
+        math.sin(d_lat / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(d_lon / 2) ** 2
+    )
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+def nominatim_fallback(lat, lng):
+    lat_delta = 10.0 / 111.0
+    lon_scale = max(math.cos(math.radians(lat)), 0.2)
+    lon_delta = 10.0 / (111.0 * lon_scale)
+    min_lat = lat - lat_delta
+    max_lat = lat + lat_delta
+    min_lng = lng - lon_delta
+    max_lng = lng + lon_delta
+    viewbox = f'{min_lng},{max_lat},{max_lng},{min_lat}'
+    base_url = 'https://nominatim.openstreetmap.org/search'
+    collected = []
+    seen = set()
+
+    for query in ['hospital', 'clinic']:
+        params = parse.urlencode({
+            'format': 'jsonv2',
+            'q': query,
+            'limit': 50,
+            'bounded': 1,
+            'viewbox': viewbox,
+        })
+        req = urlrequest.Request(
+            f'{base_url}?{params}',
+            headers={
+                'User-Agent': 'Rudransh-Sepsis-EWS/1.0',
+                'Accept': 'application/json',
+            },
+            method='GET',
+        )
+        with urlrequest.urlopen(req, timeout=8) as response:
+            results = json.loads(response.read().decode('utf-8'))
+        for item in results:
+            try:
+                item_lat = float(item['lat'])
+                item_lng = float(item['lon'])
+            except (KeyError, ValueError, TypeError):
+                continue
+            if haversine_km(lat, lng, item_lat, item_lng) > 10.0:
+                continue
+            key = (round(item_lat, 5), round(item_lng, 5), item.get('display_name', ''))
+            if key in seen:
+                continue
+            seen.add(key)
+            display_name = item.get('display_name', '')
+            name = display_name.split(',')[0].strip() if display_name else 'Hospital'
+            collected.append({
+                'lat': item_lat,
+                'lon': item_lng,
+                'tags': {
+                    'name': name or 'Hospital',
+                    'amenity': query,
+                    'addr:street': display_name,
+                }
+            })
+    return collected
 
 @app.route('/')
 def dashboard():
@@ -174,6 +243,25 @@ def api_hospitals():
             errors.append(f'{endpoint}: {e.reason}')
         except Exception as e:
             errors.append(f'{endpoint}: {str(e)}')
+
+    try:
+        elements = nominatim_fallback(lat, lng)
+        HOSPITAL_CACHE[cache_key] = {
+            'timestamp': now,
+            'elements': elements,
+            'source': 'https://nominatim.openstreetmap.org/search',
+        }
+        return jsonify({
+            'success': True,
+            'elements': elements,
+            'source': 'https://nominatim.openstreetmap.org/search',
+            'cached': False,
+            'fallback': True,
+        })
+    except Exception as e:
+        errors.append(f'nominatim fallback: {str(e)}')
+
+    print('Hospital lookup failed:', '; '.join(errors), flush=True)
 
     return jsonify({
         'success': False,
