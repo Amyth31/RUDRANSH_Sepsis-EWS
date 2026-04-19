@@ -1,0 +1,38 @@
+{
+  "auc_gb": 1.0,
+  "auc_rf": 1.0,
+  "auc_ensemble": 1.0,
+  "cv_gb_mean": 0.9999,
+  "cv_gb_std": 0.0002,
+  "per_class_auc": {
+    "Low Risk": 1.0,
+    "Medium Risk": 1.0,
+    "High Risk": 1.0
+  },
+  "feature_importance": {
+    "mean_Lactate": 0.8699483997976857,
+    "mean_Temp": 0.12098106297181943,
+    "mean_Creatinine": 0.007100051441058222,
+    "mean_Platelets": 0.0005658384469919811,
+    "shock_index": 0.0004928782926881932,
+    "mean_MAP": 0.0003278423267717178,
+    "mean_O2Sat": 0.0002598957231403972,
+    "mean_HR": 0.00010738621705759567,
+    "trend_Creatinine": 4.550398236282855e-05,
+    "trend_O2Sat": 2.957035259435616e-05,
+    "trend_MAP": 2.7813744537927245e-05,
+    "trend_Lactate": 2.622149513326778e-05,
+    "trend_Temp": 2.3834143233739216e-05,
+    "mean_SBP": 2.2923073706606493e-05,
+    "trend_HR": 1.8696369388758857e-05,
+    "trend_SBP": 1.774297231871219e-05,
+    "trend_Platelets": 4.338649510770795e-06
+  },
+  "n_train": 8000,
+  "n_test": 2000,
+  "class_distribution": {
+    "Low": 5606,
+    "Medium": 2946,
+    "High": 1448
+  }
+}

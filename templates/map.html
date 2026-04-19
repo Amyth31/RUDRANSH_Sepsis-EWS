@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rudransh — Hospital Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --black:#000000; --bg-1:#0a0a0a; --bg-2:#111111; --bg-3:#1a1a1a;
+  --border:#222222; --border-hi:#333333;
+  --text-1:#ffffff; --text-2:#888888; --text-3:#444444;
+  --accent:#00c6ff; --green:#00e676; --yellow:#ffab40; --red:#ff4757;
+  --font-head:'Syne',sans-serif; --font-mono:'Space Mono',monospace;
+  --header-bg:rgba(0,0,0,0.95);
+}
+body.light{
+  --black:#f5f5f3; --bg-1:#ebebea; --bg-2:#e0e0de; --bg-3:#d5d5d3;
+  --border:#ccc; --border-hi:#aaa;
+  --text-1:#0a0a0a; --text-2:#555; --text-3:#999;
+  --accent:#0077cc; --green:#1a9e52; --yellow:#c47a00; --red:#d0323f;
+  --header-bg:rgba(245,245,243,0.95);
+}
+.header-right{display:flex;align-items:center;gap:14px;}
+.header-clock{font-family:var(--font-mono);font-size:0.63rem;color:var(--text-3);}
+.toggle-wrap{display:flex;align-items:center;gap:8px;}
+.toggle-label{font-family:var(--font-mono);font-size:0.56rem;letter-spacing:0.1em;color:var(--text-3);text-transform:uppercase;user-select:none;}
+.toggle{position:relative;width:40px;height:22px;cursor:pointer;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{position:absolute;inset:0;background:var(--bg-3);border:1px solid var(--border);border-radius:11px;transition:all 0.3s;}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:var(--text-3);border-radius:50%;transition:all 0.3s;}
+.toggle input:checked~.toggle-track{background:var(--accent);border-color:var(--accent);}
+.toggle input:checked~.toggle-thumb{transform:translateX(18px);background:#fff;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--black);color:var(--text-1);font-family:var(--font-head);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* HEADER */
+header{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:var(--header-bg);border-bottom:1px solid var(--border);flex-shrink:0;z-index:1000;}
+.logo-text{font-weight:800;font-size:1.05rem;letter-spacing:0.1em;color:var(--text-1);text-transform:uppercase;text-decoration:none;}
+.logo-text span{color:var(--accent);}
+.nav-links{display:flex;gap:2px;}
+.nav-link{padding:6px 16px;border-radius:4px;font-family:var(--font-mono);font-size:0.68rem;color:var(--text-3);text-decoration:none;transition:all 0.2s;letter-spacing:0.05em;border:1px solid transparent;}
+.nav-link:hover{color:var(--text-1);border-color:var(--border);}
+.nav-link.active{color:var(--accent);border-color:var(--border-hi);background:rgba(0,198,255,0.05);}
+.header-right{font-family:var(--font-mono);font-size:0.63rem;color:var(--text-3);}
+
+/* LAYOUT */
+.app{display:flex;flex:1;overflow:hidden;}
+
+/* SIDEBAR */
+.sidebar{width:340px;flex-shrink:0;background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+
+.sidebar-top{padding:24px 24px 20px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sidebar-section-label{font-family:var(--font-mono);font-size:0.56rem;letter-spacing:0.2em;color:var(--text-3);text-transform:uppercase;margin-bottom:14px;}
+.sidebar-heading{font-size:0.9rem;font-weight:700;color:var(--text-1);margin-bottom:6px;}
+.sidebar-sub{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-3);line-height:1.6;}
+
+.locate-btn{width:100%;margin-top:16px;padding:12px;background:var(--accent);color:var(--black);border:none;font-family:var(--font-head);font-weight:800;font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+.locate-btn:hover{background:#33d1ff;}
+.locate-btn:disabled{background:var(--bg-3);color:var(--text-3);cursor:not-allowed;}
+
+.search-wrap{padding:12px 24px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.search-input{width:100%;padding:9px 12px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-1);font-family:var(--font-mono);font-size:0.7rem;outline:none;transition:border-color 0.2s;}
+.search-input::placeholder{color:var(--text-3);}
+.search-input:focus{border-color:var(--accent);}
+
+.status-bar{padding:9px 24px;background:var(--bg-2);border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:0.58rem;color:var(--text-3);letter-spacing:0.06em;}
+.s-dot{width:6px;height:6px;border-radius:50%;background:var(--text-3);flex-shrink:0;}
+.s-dot.green{background:var(--green);box-shadow:0 0 6px rgba(0,230,118,0.6);}
+.s-dot.blue{background:var(--accent);animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+/* HOSPITAL LIST */
+.hospital-list{flex:1;overflow-y:auto;padding:12px 16px;}
+.hospital-list::-webkit-scrollbar{width:3px;}
+.hospital-list::-webkit-scrollbar-thumb{background:var(--border);}
+
+.hospital-card{padding:14px 16px;border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:all 0.2s;position:relative;border-left:2px solid transparent;}
+.hospital-card:hover{border-color:var(--border-hi);border-left-color:var(--accent);background:var(--bg-2);}
+.hospital-card.selected{border-color:var(--border-hi);border-left-color:var(--accent);background:var(--bg-2);}
+
+.hosp-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.hosp-name{font-size:0.78rem;font-weight:700;color:var(--text-1);line-height:1.3;}
+.hosp-dist{font-family:var(--font-mono);font-size:0.62rem;color:var(--accent);white-space:nowrap;flex-shrink:0;}
+.hosp-type{font-family:var(--font-mono);font-size:0.56rem;letter-spacing:0.08em;text-transform:uppercase;margin-top:6px;color:var(--text-3);}
+.hosp-addr{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-3);margin-top:5px;line-height:1.5;}
+.dir-btn{width:100%;margin-top:10px;padding:7px;background:transparent;border:1px solid var(--border);color:var(--text-3);font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+.dir-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;gap:12px;}
+.empty-label{font-family:var(--font-mono);font-size:0.62rem;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;}
+.empty-sub{font-family:var(--font-mono);font-size:0.58rem;color:var(--text-3);line-height:1.8;}
+
+/* MAP */
+.map-wrap{flex:1;position:relative;}
+#map{width:100%;height:100%;}
+
+/* Map native dark via CARTO */
+.leaflet-container{background:#000;}
+.leaflet-control-zoom a{background:var(--bg-2)!important;color:var(--text-1)!important;border-color:var(--border)!important;font-family:var(--font-mono)!important;}
+.leaflet-control-zoom a:hover{background:var(--bg-3)!important;color:var(--accent)!important;}
+.leaflet-control-attribution{background:rgba(0,0,0,0.7)!important;color:var(--text-3)!important;font-size:0.55rem!important;font-family:var(--font-mono)!important;}
+.leaflet-control-attribution a{color:var(--accent)!important;}
+.leaflet-popup-content-wrapper{background:var(--bg-2)!important;border:1px solid var(--border)!important;border-radius:0!important;box-shadow:0 8px 32px rgba(0,0,0,0.6)!important;color:var(--text-1)!important;}
+.leaflet-popup-tip{background:var(--bg-2)!important;}
+.leaflet-popup-close-button{color:var(--text-3)!important;}
+.popup-name{font-family:var(--font-head);font-weight:700;font-size:0.85rem;margin-bottom:4px;color:var(--text-1);}
+.popup-addr{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-3);margin-bottom:6px;line-height:1.5;}
+.popup-dist{font-family:var(--font-mono);font-size:0.62rem;color:var(--accent);margin-bottom:10px;}
+.popup-btn{display:block;width:100%;padding:8px;background:var(--accent);color:var(--black);border:none;font-family:var(--font-head);font-weight:800;font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;text-align:center;text-decoration:none;transition:opacity 0.2s;}
+.popup-btn:hover{opacity:0.85;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo-text" href="/">Rudransh<span>.</span></a>
+  <nav class="nav-links">
+    <a class="nav-link" href="/">Dashboard</a>
+    <a class="nav-link" href="/predict">Predict</a>
+    <a class="nav-link active" href="/map">Hospital Map</a>
+  </nav>
+  <div class="header-right">
+    <div class="header-clock" id="clock"></div>
+    <div class="toggle-wrap">
+      <span class="toggle-label" id="mode-label">Dark</span>
+      <label class="toggle">
+        <input type="checkbox" id="mode-toggle" onchange="toggleMode()">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-section-label">Hospital Finder</div>
+      <div class="sidebar-heading">Nearby ICU Locator</div>
+      <div class="sidebar-sub">10km radius · Real-time OpenStreetMap data</div>
+      <button class="locate-btn" id="locate-btn" onclick="locateMe()">
+        Use My Location
+      </button>
+    </div>
+
+    <div class="search-wrap">
+      <input class="search-input" id="search-input" type="text"
+        placeholder="Search hospitals by name…"
+        oninput="filterHospitals(this.value)">
+    </div>
+
+    <div class="status-bar">
+      <div class="s-dot" id="s-dot"></div>
+      <span id="status-text">Click "Use My Location" to begin</span>
+    </div>
+
+    <div class="hospital-list" id="hospital-list">
+      <div class="empty-state">
+        <div class="empty-label">No Location</div>
+        <div class="empty-sub">Share your location to discover<br>hospitals within 10km radius</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="map-wrap">
+    <div id="map"></div>
+  </div>
+</div>
+
+<script>
+// Clock
+function clock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});}
+setInterval(clock,1000);clock();
+
+// THEME TOGGLE
+const THEME_KEY='rudransh_theme';
+const TILE_DARK  = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+const TILE_LIGHT = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const ATTR_DARK  = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>';
+const ATTR_LIGHT = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+let tileLayer = null;
+
+function setTiles(light){
+  if(tileLayer) map.removeLayer(tileLayer);
+  tileLayer = L.tileLayer(light ? TILE_LIGHT : TILE_DARK, {
+    attribution: light ? ATTR_LIGHT : ATTR_DARK,
+    subdomains: light ? 'abc' : 'abcd',
+    maxZoom: 19
+  }).addTo(map);
+}
+
+function toggleMode(){
+  const isLight = document.getElementById('mode-toggle').checked;
+  document.body.classList.toggle('light', isLight);
+  document.getElementById('mode-label').textContent = isLight ? 'Light' : 'Dark';
+  localStorage.setItem(THEME_KEY, isLight ? 'light' : 'dark');
+  setTiles(isLight);
+}
+
+// MAP INIT
+const map = L.map('map',{zoomControl:true}).setView([20.5937,78.9629],5);
+setTiles(false); // start dark
+
+// Init theme from saved preference
+(function initTheme(){
+  const saved = localStorage.getItem(THEME_KEY);
+  if(saved === 'light'){
+    document.body.classList.add('light');
+    document.getElementById('mode-toggle').checked = true;
+    document.getElementById('mode-label').textContent = 'Light';
+    setTiles(true);
+  }
+})();
+
+// ICONS
+const userIcon = L.divIcon({
+  html:`<div style="width:14px;height:14px;background:#00c6ff;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 3px rgba(0,198,255,0.3)"></div>`,
+  iconSize:[14,14],iconAnchor:[7,7],className:''
+});
+const hospIcon = L.divIcon({
+  html:`<div style="width:30px;height:30px;background:#111;border:1px solid #ff4757;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 10px rgba(255,71,87,0.3)">+</div>`,
+  iconSize:[30,30],iconAnchor:[15,15],className:''
+});
+const hospSel = L.divIcon({
+  html:`<div style="width:36px;height:36px;background:#111;border:2px solid #00c6ff;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 14px rgba(0,198,255,0.4)">+</div>`,
+  iconSize:[36,36],iconAnchor:[18,18],className:''
+});
+
+let userMarker=null,radiusCircle=null;
+let hospitalMarkers=[],allHospitals=[];
+let selectedIdx=-1,userLat=null,userLng=null;
+
+function locateMe(){
+  const btn=document.getElementById('locate-btn');
+  const dot=document.getElementById('s-dot');
+  const txt=document.getElementById('status-text');
+  if(!navigator.geolocation){alert('Geolocation not supported.');return;}
+  btn.disabled=true;btn.textContent='Locating…';
+  dot.className='s-dot blue';txt.textContent='Fetching coordinates…';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    userLat=pos.coords.latitude;userLng=pos.coords.longitude;
+    if(userMarker)map.removeLayer(userMarker);
+    userMarker=L.marker([userLat,userLng],{icon:userIcon}).addTo(map)
+      .bindPopup('<div style="font-family:Space Mono;font-size:0.7rem;color:#fff">Your Location</div>');
+    if(radiusCircle)map.removeLayer(radiusCircle);
+    radiusCircle=L.circle([userLat,userLng],{radius:10000,color:'#00c6ff',fillColor:'#00c6ff',fillOpacity:0.03,weight:1,dashArray:'5,5'}).addTo(map);
+    map.fitBounds(radiusCircle.getBounds(),{padding:[40,40]});
+    dot.className='s-dot blue';txt.textContent='Searching hospitals nearby…';
+    fetchHospitals(userLat,userLng);
+    btn.disabled=false;btn.textContent='Refresh Location';
+  },err=>{
+    btn.disabled=false;btn.textContent='Use My Location';
+    dot.className='s-dot';txt.textContent='Location denied. Enable permissions.';
+  },{enableHighAccuracy:true,timeout:10000,maximumAge:0});
+}
+
+async function fetchHospitals(lat,lng){
+  const dot=document.getElementById('s-dot');
+  const txt=document.getElementById('status-text');
+  const q=`[out:json][timeout:25];(node["amenity"="hospital"](around:10000,${lat},${lng});way["amenity"="hospital"](around:10000,${lat},${lng});node["amenity"="clinic"](around:10000,${lat},${lng});node["healthcare"="hospital"](around:10000,${lat},${lng}););out center;`;
+  try{
+    const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)});
+    const data=await res.json();
+    hospitalMarkers.forEach(m=>map.removeLayer(m));
+    hospitalMarkers=[];allHospitals=[];
+    const els=data.elements||[];
+    if(!els.length){
+      dot.className='s-dot';txt.textContent='No hospitals found within 10km.';
+      document.getElementById('hospital-list').innerHTML=`<div class="empty-state"><div class="empty-label">No Results</div><div class="empty-sub">No hospitals found within 10km radius.</div></div>`;
+      return;
+    }
+    els.forEach((el,i)=>{
+      const eLat=el.lat||el.center?.lat,eLng=el.lon||el.center?.lon;
+      if(!eLat||!eLng)return;
+      const name=el.tags?.name||el.tags?.['name:en']||'Hospital';
+      const amenity=el.tags?.amenity||'hospital';
+      const addr=[el.tags?.['addr:street'],el.tags?.['addr:city'],el.tags?.['addr:state']].filter(Boolean).join(', ')||'Address unavailable';
+      const dist=haversine(lat,lng,eLat,eLng);
+      const hosp={i,name,amenity,addr,lat:eLat,lng:eLng,dist};
+      allHospitals.push(hosp);
+      const marker=L.marker([eLat,eLng],{icon:hospIcon}).addTo(map).bindPopup(makePopup(hosp));
+      marker.on('click',()=>selectHospital(i));
+      hospitalMarkers.push(marker);
+    });
+    allHospitals.sort((a,b)=>a.dist-b.dist);
+    dot.className='s-dot green';txt.textContent=`${allHospitals.length} hospitals found within 10km`;
+    renderList(allHospitals);
+  }catch(e){
+    dot.className='s-dot';txt.textContent='Error fetching data.';console.error(e);
+  }
+}
+
+function makePopup(h){
+  const url=`https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}`;
+  return`<div style="min-width:190px;font-family:Syne,sans-serif">
+    <div class="popup-name">${h.name}</div>
+    <div class="popup-addr">${h.addr}</div>
+    <div class="popup-dist">${h.dist.toFixed(2)} km away</div>
+    <a href="${url}" target="_blank" class="popup-btn">Get Directions</a>
+  </div>`;
+}
+
+function renderList(hospitals){
+  const list=document.getElementById('hospital-list');
+  if(!hospitals.length){
+    list.innerHTML=`<div class="empty-state"><div class="empty-label">No Results</div><div class="empty-sub">No results match your search.</div></div>`;
+    return;
+  }
+  list.innerHTML=hospitals.map(h=>`
+    <div class="hospital-card" id="hc-${h.i}" onclick="selectHospital(${h.i})">
+      <div class="hosp-top">
+        <div class="hosp-name">${h.name}</div>
+        <div class="hosp-dist">${h.dist.toFixed(2)} km</div>
+      </div>
+      <div class="hosp-type">${h.amenity}</div>
+      <div class="hosp-addr">${h.addr}</div>
+      <button class="dir-btn" onclick="openDir(event,${h.lat},${h.lng})">Get Directions</button>
+    </div>`).join('');
+}
+
+function selectHospital(idx){
+  if(selectedIdx>=0&&hospitalMarkers[selectedIdx])hospitalMarkers[selectedIdx].setIcon(hospIcon);
+  selectedIdx=idx;
+  if(hospitalMarkers[idx]){
+    hospitalMarkers[idx].setIcon(hospSel);
+    hospitalMarkers[idx].openPopup();
+    const h=allHospitals.find(h=>h.i===idx);
+    if(h)map.panTo([h.lat,h.lng]);
+  }
+  document.querySelectorAll('.hospital-card').forEach(c=>c.classList.remove('selected'));
+  const card=document.getElementById(`hc-${idx}`);
+  if(card){card.classList.add('selected');card.scrollIntoView({behavior:'smooth',block:'nearest'});}
+}
+
+function openDir(e,lat,lng){
+  e.stopPropagation();
+  const url=userLat?`https://www.google.com/maps/dir/${userLat},${userLng}/${lat},${lng}`:`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  window.open(url,'_blank');
+}
+
+function filterHospitals(q){
+  q=q.toLowerCase().trim();
+  renderList(q?allHospitals.filter(h=>h.name.toLowerCase().includes(q)||h.addr.toLowerCase().includes(q)):allHospitals);
+}
+
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rudransh — Predict</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#000;--bg-1:#0a0a0a;--bg-2:#111;--bg-3:#1a1a1a;
+  --border:#222;--border-hi:#333;
+  --text-1:#fff;--text-2:#888;--text-3:#444;
+  --accent:#00c6ff;--green:#00e676;--yellow:#ffab40;--red:#ff4757;
+  --font-head:'Syne',sans-serif;--font-mono:'Space Mono',monospace;
+  --header-bg:rgba(0,0,0,0.95);
+}
+body.light{
+  --black:#f5f5f3;--bg-1:#ebebea;--bg-2:#e0e0de;--bg-3:#d5d5d3;
+  --border:#ccc;--border-hi:#aaa;
+  --text-1:#0a0a0a;--text-2:#555;--text-3:#999;
+  --accent:#0077cc;--green:#1a9e52;--yellow:#c47a00;--red:#d0323f;
+  --header-bg:rgba(245,245,243,0.95);
+}
+.header-right{display:flex;align-items:center;gap:14px;}
+.header-clock{font-family:var(--font-mono);font-size:0.63rem;color:var(--text-3);}
+.toggle-wrap{display:flex;align-items:center;gap:8px;}
+.toggle-label{font-family:var(--font-mono);font-size:0.56rem;letter-spacing:0.1em;color:var(--text-3);text-transform:uppercase;user-select:none;}
+.toggle{position:relative;width:40px;height:22px;cursor:pointer;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{position:absolute;inset:0;background:var(--bg-3);border:1px solid var(--border);border-radius:11px;transition:all 0.3s;}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:var(--text-3);border-radius:50%;transition:all 0.3s;}
+.toggle input:checked~.toggle-track{background:var(--accent);border-color:var(--accent);}
+.toggle input:checked~.toggle-thumb{transform:translateX(18px);background:#fff;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{background:var(--black);color:var(--text-1);font-family:var(--font-head);display:flex;flex-direction:column;overflow:hidden;}
+
+/* HEADER */
+header{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:var(--header-bg);border-bottom:1px solid var(--border);flex-shrink:0;z-index:100;}
+.logo-text{font-weight:800;font-size:1.05rem;letter-spacing:0.1em;color:var(--text-1);text-transform:uppercase;text-decoration:none;}
+.logo-text span{color:var(--accent);}
+.nav-links{display:flex;gap:2px;}
+.nav-link{padding:6px 16px;border-radius:3px;font-family:var(--font-mono);font-size:0.68rem;color:var(--text-3);text-decoration:none;transition:all 0.2s;letter-spacing:0.05em;border:1px solid transparent;}
+.nav-link:hover{color:var(--text-1);border-color:var(--border);}
+.nav-link.active{color:var(--accent);border-color:var(--border-hi);background:rgba(0,198,255,0.05);}
+.header-clock{font-family:var(--font-mono);font-size:0.63rem;color:var(--text-3);}
+
+/* ── SCREENS ── */
+.screen{display:none;flex:1;overflow:hidden;}
+.screen.active{display:flex;}
+
+/* ═══════════════════════════════
+   SCREEN 1 — LOGIN
+═══════════════════════════════ */
+#screen-login{align-items:center;justify-content:center;}
+.login-box{width:440px;padding:56px;}
+.login-eyebrow{font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.22em;color:var(--text-3);text-transform:uppercase;margin-bottom:28px;}
+.login-title{font-size:1.8rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px;}
+.login-sub{font-size:0.82rem;color:var(--text-2);line-height:1.7;margin-bottom:44px;}
+
+.login-tabs{display:flex;gap:0;margin-bottom:32px;border-bottom:1px solid var(--border);}
+.login-tab{padding:10px 20px;font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;}
+.login-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+.field-label{font-family:var(--font-mono);font-size:0.56rem;letter-spacing:0.16em;color:var(--text-3);text-transform:uppercase;margin-bottom:8px;}
+.field-input{width:100%;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-1);font-family:var(--font-mono);font-size:0.78rem;outline:none;transition:border-color 0.2s;margin-bottom:20px;}
+.field-input::placeholder{color:var(--text-3);}
+.field-input:focus{border-color:var(--accent);}
+
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.login-btn{width:100%;padding:13px;background:var(--accent);color:var(--black);border:none;font-family:var(--font-head);font-weight:800;font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+.login-btn:hover{background:#33d1ff;}
+.login-err{font-family:var(--font-mono);font-size:0.62rem;color:var(--red);margin-top:12px;min-height:18px;}
+
+/* ═══════════════════════════════
+   SCREEN 2 — HOURLY ENTRY
+═══════════════════════════════ */
+#screen-entry{flex-direction:row;}
+
+.entry-sidebar{width:300px;flex-shrink:0;background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.entry-sidebar-top{padding:24px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.patient-id-badge{font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.14em;color:var(--accent);text-transform:uppercase;margin-bottom:8px;}
+.patient-name-big{font-size:1rem;font-weight:700;margin-bottom:4px;}
+.patient-meta{font-family:var(--font-mono);font-size:0.62rem;color:var(--text-3);}
+
+.hour-steps{padding:16px;flex:1;overflow-y:auto;}
+.hour-step{display:flex;align-items:center;gap:12px;padding:12px;cursor:pointer;border:1px solid transparent;transition:all 0.2s;margin-bottom:4px;}
+.hour-step:hover{border-color:var(--border);}
+.hour-step.active{border-color:var(--accent);background:rgba(0,198,255,0.04);}
+.hour-step.done{border-color:var(--border);}
+.step-dot{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:0.6rem;color:var(--text-3);flex-shrink:0;transition:all 0.2s;}
+.hour-step.active .step-dot{border-color:var(--accent);color:var(--accent);}
+.hour-step.done .step-dot{background:rgba(0,230,118,0.12);border-color:rgba(0,230,118,0.4);color:var(--green);}
+.step-label{font-family:var(--font-mono);font-size:0.62rem;color:var(--text-3);}
+.hour-step.active .step-label{color:var(--text-1);}
+.hour-step.done .step-label{color:var(--text-2);}
+.step-check{margin-left:auto;font-size:0.7rem;color:var(--green);opacity:0;}
+.hour-step.done .step-check{opacity:1;}
+
+.entry-sidebar-bottom{padding:16px;border-top:1px solid var(--border);flex-shrink:0;}
+.analyze-btn{width:100%;padding:12px;background:var(--accent);color:var(--black);border:none;font-family:var(--font-head);font-weight:800;font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;}
+.analyze-btn:hover{background:#33d1ff;}
+.analyze-btn:disabled{background:var(--bg-3);color:var(--text-3);cursor:not-allowed;}
+.analyze-hint{font-family:var(--font-mono);font-size:0.56rem;color:var(--text-3);text-align:center;margin-top:8px;line-height:1.6;}
+
+/* ENTRY MAIN */
+.entry-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.entry-top{padding:24px 32px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;}
+.entry-hour-label{font-size:1rem;font-weight:700;}
+.entry-hour-sub{font-family:var(--font-mono);font-size:0.62rem;color:var(--text-3);margin-top:4px;}
+.entry-nav{display:flex;gap:8px;}
+.entry-nav-btn{padding:7px 16px;border:1px solid var(--border);background:transparent;color:var(--text-3);font-family:var(--font-mono);font-size:0.62rem;cursor:pointer;transition:all 0.2s;letter-spacing:0.05em;}
+.entry-nav-btn:hover{border-color:var(--border-hi);color:var(--text-1);}
+.entry-nav-btn:disabled{opacity:0.3;cursor:not-allowed;}
+
+.entry-form{flex:1;overflow-y:auto;padding:24px 32px;}
+.entry-form::-webkit-scrollbar{width:3px;}
+.entry-form::-webkit-scrollbar-thumb{background:var(--border);}
+
+.vitals-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.vital-card{background:var(--bg-2);border:1px solid var(--border);padding:16px;}
+.vital-card-name{font-size:0.72rem;font-weight:700;color:var(--text-2);margin-bottom:4px;}
+.vital-card-unit{font-family:var(--font-mono);font-size:0.56rem;color:var(--text-3);}
+.vital-card-input{width:100%;margin-top:10px;padding:10px 8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-1);font-family:var(--font-mono);font-size:1rem;font-weight:700;text-align:center;outline:none;transition:border-color 0.2s;-moz-appearance:textfield;}
+.vital-card-input::-webkit-outer-spin-button,.vital-card-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.vital-card-input:focus{border-color:var(--accent);}
+.vital-card-input.filled{border-color:rgba(0,230,118,0.3);color:var(--text-1);}
+.vital-ref{font-family:var(--font-mono);font-size:0.52rem;color:var(--text-3);margin-top:6px;}
+
+/* ═══════════════════════════════
+   SCREEN 3 — RESULT
+═══════════════════════════════ */
+#screen-result{flex-direction:row;}
+.result-sidebar{width:300px;flex-shrink:0;background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 24px;overflow-y:auto;}
+.result-patient-badge{font-family:var(--font-mono);font-size:0.56rem;letter-spacing:0.14em;color:var(--accent);text-transform:uppercase;margin-bottom:6px;}
+.result-patient-name{font-size:0.95rem;font-weight:700;margin-bottom:4px;}
+.result-patient-meta{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-3);margin-bottom:32px;}
+
+.result-sidebar-label{font-family:var(--font-mono);font-size:0.54rem;letter-spacing:0.18em;color:var(--text-3);text-transform:uppercase;margin-bottom:14px;}
+.feat-table{width:100%;border-collapse:collapse;margin-bottom:28px;}
+.feat-table th{font-family:var(--font-mono);font-size:0.52rem;letter-spacing:0.1em;color:var(--text-3);text-transform:uppercase;padding:0 0 10px;border-bottom:1px solid var(--border);text-align:left;font-weight:400;}
+.feat-table th+th{padding-left:10px;}
+.feat-table td{font-family:var(--font-mono);font-size:0.64rem;color:var(--text-2);padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.feat-table td+td{padding-left:10px;}
+.feat-table tr:last-child td{border-bottom:none;}
+.trend-up{color:var(--red)!important;}
+.trend-dn{color:var(--green)!important;}
+.trend-fl{color:var(--text-3)!important;}
+
+.back-btn{width:100%;padding:11px;background:transparent;border:1px solid var(--border);color:var(--text-3);font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;margin-top:auto;}
+.back-btn:hover{border-color:var(--border-hi);color:var(--text-1);}
+
+.result-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.risk-hero{padding:40px 44px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.risk-eyebrow{font-family:var(--font-mono);font-size:0.56rem;letter-spacing:0.2em;color:var(--text-3);text-transform:uppercase;margin-bottom:18px;}
+.risk-badge{font-size:2.4rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:10px;}
+.risk-badge.low{color:var(--green);}
+.risk-badge.medium{color:var(--yellow);}
+.risk-badge.high{color:var(--red);}
+.risk-conf{font-family:var(--font-mono);font-size:0.68rem;color:var(--text-3);margin-bottom:20px;}
+.risk-conf strong{color:var(--text-1);}
+.risk-note{font-size:0.82rem;color:var(--text-2);line-height:1.75;max-width:560px;padding-top:18px;border-top:1px solid var(--border);}
+
+.prob-section{padding:24px 44px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.prob-label{font-family:var(--font-mono);font-size:0.54rem;letter-spacing:0.18em;color:var(--text-3);text-transform:uppercase;margin-bottom:16px;}
+.prob-bars{display:flex;flex-direction:column;gap:12px;}
+.prob-row{display:flex;align-items:center;gap:14px;}
+.prob-name{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-2);width:58px;flex-shrink:0;}
+.prob-track{flex:1;height:3px;background:var(--bg-3);}
+.prob-fill{height:100%;width:0;transition:width 1.3s cubic-bezier(0.4,0,0.2,1);}
+.prob-fill.low{background:var(--green);}
+.prob-fill.medium{background:var(--yellow);}
+.prob-fill.high{background:var(--red);}
+.prob-pct{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-1);width:38px;text-align:right;flex-shrink:0;}
+
+.result-bottom{display:grid;grid-template-columns:1fr 1fr;flex:1;overflow:hidden;}
+.result-panel{padding:22px 28px;overflow-y:auto;border-right:1px solid var(--border);}
+.result-panel:last-child{border-right:none;}
+.result-panel::-webkit-scrollbar{width:3px;}
+.result-panel::-webkit-scrollbar-thumb{background:var(--border);}
+.panel-label{font-family:var(--font-mono);font-size:0.54rem;letter-spacing:0.18em;color:var(--text-3);text-transform:uppercase;margin-bottom:16px;}
+
+.shock-val{font-family:var(--font-mono);font-size:2.4rem;font-weight:700;line-height:1;margin-bottom:6px;}
+.shock-val.normal{color:var(--green);}
+.shock-val.warn{color:var(--yellow);}
+.shock-val.danger{color:var(--red);}
+.shock-sub{font-family:var(--font-mono);font-size:0.6rem;color:var(--text-3);margin-bottom:24px;}
+
+.wave-btns{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;}
+.wb{padding:3px 10px;border:1px solid var(--border);background:transparent;color:var(--text-3);font-family:var(--font-mono);font-size:0.56rem;cursor:pointer;transition:all 0.2s;letter-spacing:0.04em;}
+.wb.active{border-color:var(--accent);color:var(--accent);background:rgba(0,198,255,0.05);}
+canvas#wc{width:100%;height:110px;display:block;}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--bg-2);border:1px solid var(--border);padding:10px 18px;font-family:var(--font-mono);font-size:0.63rem;color:var(--text-2);transform:translateY(60px);opacity:0;transition:all 0.3s;z-index:999;}
+.toast.show{transform:translateY(0);opacity:1;}
+.demo-case-btn{width:100%;padding:14px 16px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-1);font-family:var(--font-head);text-align:left;cursor:pointer;transition:all 0.2s;}
+.demo-case-btn:hover{border-color:var(--border-hi);background:var(--bg-3);}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo-text" href="/">Rudransh<span>.</span></a>
+  <nav class="nav-links">
+    <a class="nav-link" href="/">Dashboard</a>
+    <a class="nav-link active" href="/predict">Predict</a>
+    <a class="nav-link" href="/map">Hospital Map</a>
+  </nav>
+  <div class="header-right">
+    <div class="header-clock" id="clock"></div>
+    <div class="toggle-wrap">
+      <span class="toggle-label" id="mode-label">Dark</span>
+      <label class="toggle">
+        <input type="checkbox" id="mode-toggle" onchange="toggleMode()">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ SCREEN 1: LOGIN ═══ -->
+<div class="screen active" id="screen-login">
+  <div class="login-box">
+    <div class="login-eyebrow">Patient Entry System</div>
+    <div class="login-title">Rudransh.</div>
+    <div class="login-sub">Register a new patient or resume an existing session using a Patient ID.</div>
+
+    <div class="login-tabs">
+      <div class="login-tab active" onclick="switchTab('new')">New Patient</div>
+      <div class="login-tab" onclick="switchTab('existing')">Existing Patient</div>
+      <div class="login-tab" onclick="switchTab('demo')">Demo Cases</div>
+    </div>
+
+    <!-- NEW PATIENT -->
+    <div class="tab-panel active" id="tab-new">
+      <div class="field-row">
+        <div>
+          <div class="field-label">Full Name</div>
+          <input class="field-input" id="new-name" type="text" placeholder="e.g. Sepoy Rajan Kumar" autocomplete="off">
+        </div>
+        <div>
+          <div class="field-label">Age</div>
+          <input class="field-input" id="new-age" type="number" placeholder="24" min="1" max="120">
+        </div>
+      </div>
+      <div class="field-label">Rank / Unit (optional)</div>
+      <input class="field-input" id="new-rank" type="text" placeholder="e.g. Sepoy, 15 JAT Regiment">
+      <button class="login-btn" onclick="registerPatient()">Register & Begin</button>
+      <div class="login-err" id="new-err"></div>
+    </div>
+
+    <!-- EXISTING PATIENT -->
+    <div class="tab-panel" id="tab-existing">
+      <div class="field-label">Patient ID</div>
+      <input class="field-input" id="ex-id" type="text" placeholder="e.g. RDR-0042" autocomplete="off"
+        onkeydown="if(event.key==='Enter')resumePatient()">
+      <button class="login-btn" onclick="resumePatient()">Resume Session</button>
+      <div class="login-err" id="ex-err"></div>
+    </div>
+
+    <!-- DEMO CASES -->
+    <div class="tab-panel" id="tab-demo">
+      <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:20px;">
+        Pre-filled patient cases for demonstration
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="demo-case-btn" onclick="loadDemoCase('low')">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;font-size:0.85rem;">Stable Patient</div>
+              <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-3);margin-top:3px;">HR 72 · MAP 91 · Lactate 1.1 · O2Sat 98%</div>
+            </div>
+            <div style="font-family:var(--font-mono);font-size:0.62rem;font-weight:700;color:var(--green);border:1px solid rgba(0,230,118,0.3);padding:3px 10px;">Low Risk</div>
+          </div>
+        </button>
+        <button class="demo-case-btn" onclick="loadDemoCase('medium')">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;font-size:0.85rem;">At-Risk Patient</div>
+              <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-3);margin-top:3px;">HR 99 · MAP 74 · Lactate 2.5 · O2Sat 94%</div>
+            </div>
+            <div style="font-family:var(--font-mono);font-size:0.62rem;font-weight:700;color:var(--yellow);border:1px solid rgba(255,171,64,0.3);padding:3px 10px;">Medium Risk</div>
+          </div>
+        </button>
+        <button class="demo-case-btn" onclick="loadDemoCase('high')">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:700;font-size:0.85rem;">Critical Patient</div>
+              <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text-3);margin-top:3px;">HR 122 · MAP 60 · Lactate 4.8 · O2Sat 89%</div>
+            </div>
+            <div style="font-family:var(--font-mono);font-size:0.62rem;font-weight:700;color:var(--red);border:1px solid rgba(255,71,87,0.3);padding:3px 10px;">High Risk</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ SCREEN 2: HOURLY ENTRY ═══ -->
+<div class="screen" id="screen-entry">
+  <div class="entry-sidebar">
+    <div class="entry-sidebar-top">
+      <div class="patient-id-badge" id="ep-id"></div>
+      <div class="patient-name-big" id="ep-name"></div>
+      <div class="patient-meta" id="ep-meta"></div>
+    </div>
+    <div class="hour-steps" id="hour-steps"></div>
+    <div class="entry-sidebar-bottom">
+      <button class="analyze-btn" id="analyze-btn" onclick="runAnalysis()" disabled>Run Analysis</button>
+      <div class="analyze-hint" id="analyze-hint">Fill all 6 hours to run analysis</div>
+    </div>
+  </div>
+
+  <div class="entry-main">
+    <div class="entry-top">
+      <div>
+        <div class="entry-hour-label" id="entry-hour-label">Hour 1 of 6</div>
+        <div class="entry-hour-sub" id="entry-hour-sub">T-6h — Earliest reading</div>
+      </div>
+      <div class="entry-nav">
+        <button class="entry-nav-btn" id="btn-prev" onclick="goHour(currentHour-1)" disabled>Prev</button>
+        <button class="entry-nav-btn" id="btn-next" onclick="goHour(currentHour+1)" disabled>Next</button>
+        <button class="entry-nav-btn" onclick="saveHour()" style="border-color:var(--accent);color:var(--accent)">Save Hour</button>
+      </div>
+    </div>
+    <div class="entry-form">
+      <div class="vitals-grid" id="vitals-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCREEN 3: RESULT ═══ -->
+<div class="screen" id="screen-result">
+  <div class="result-sidebar">
+    <div class="result-patient-badge" id="rp-id"></div>
+    <div class="result-patient-name" id="rp-name"></div>
+    <div class="result-patient-meta" id="rp-meta"></div>
+    <div class="result-sidebar-label">Engineered Features</div>
+    <table class="feat-table" id="feat-table">
+      <thead><tr><th>Variable</th><th>Mean</th><th>Trend/h</th></tr></thead>
+      <tbody id="feat-tbody"></tbody>
+    </table>
+    <button class="back-btn" onclick="goBack()">New Entry / Back</button>
+  </div>
+  <div class="result-main">
+    <div class="risk-hero">
+      <div class="risk-eyebrow">Sepsis Risk Assessment</div>
+      <div class="risk-badge" id="r-badge">—</div>
+      <div class="risk-conf" id="r-conf"></div>
+      <div class="risk-note" id="r-note"></div>
+    </div>
+    <div class="prob-section">
+      <div class="prob-label">Risk Probability</div>
+      <div class="prob-bars">
+        <div class="prob-row"><div class="prob-name">Low</div><div class="prob-track"><div class="prob-fill low" id="pf-Low"></div></div><div class="prob-pct" id="pp-Low">—</div></div>
+        <div class="prob-row"><div class="prob-name">Medium</div><div class="prob-track"><div class="prob-fill medium" id="pf-Medium"></div></div><div class="prob-pct" id="pp-Medium">—</div></div>
+        <div class="prob-row"><div class="prob-name">High</div><div class="prob-track"><div class="prob-fill high" id="pf-High"></div></div><div class="prob-pct" id="pp-High">—</div></div>
+      </div>
+    </div>
+    <div class="result-bottom">
+      <div class="result-panel">
+        <div class="panel-label">Shock Index (HR / SBP)</div>
+        <div class="shock-val" id="shock-val">—</div>
+        <div class="shock-sub" id="shock-sub"></div>
+        <div class="panel-label" style="margin-top:8px">6-Hour Vital Trend</div>
+        <div class="wave-btns" id="wave-btns"></div>
+        <canvas id="wc"></canvas>
+      </div>
+      <div class="result-panel">
+        <div class="panel-label">Hourly Readings Summary</div>
+        <table class="feat-table" id="hourly-table" style="width:100%">
+          <thead><tr><th>Hour</th><th>HR</th><th>MAP</th><th>Lactate</th><th>O2Sat</th></tr></thead>
+          <tbody id="hourly-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════
+const VITALS_DEF = [
+  {key:'HR',        label:'Heart Rate',       unit:'bpm',    ref:'60–100'},
+  {key:'MAP',       label:'Mean Art. Press',  unit:'mmHg',   ref:'70–100'},
+  {key:'SBP',       label:'Syst. BP',         unit:'mmHg',   ref:'90–120'},
+  {key:'Temp',      label:'Temperature',      unit:'°C',     ref:'36.5–37.5'},
+  {key:'O2Sat',     label:'O₂ Saturation',    unit:'%',      ref:'95–100'},
+  {key:'Lactate',   label:'Lactate',          unit:'mmol/L', ref:'0.5–1.5'},
+  {key:'Creatinine',label:'Creatinine',       unit:'mg/dL',  ref:'0.6–1.2'},
+  {key:'Platelets', label:'Platelets',        unit:'K/μL',   ref:'150–400'},
+];
+
+const HOUR_LABELS = ['T-6h','T-5h','T-4h','T-3h','T-2h','T-0h'];
+const DB_KEY_PATIENTS = 'rudransh_patients';
+const DB_KEY_RECORDS  = 'sepsisalert_patients';
+
+let currentPatient = null;
+let currentHour    = 0; // 0-indexed (0=T-6h, 5=T-0h)
+let selectedVital  = 'HR';
+let lastResult     = null;
+
+// ═══════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════
+function clock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});}
+setInterval(clock,1000);clock();
+
+// ═══════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════
+const THEME_KEY='rudransh_theme';
+function toggleMode(){
+  const isLight=document.getElementById('mode-toggle').checked;
+  document.body.classList.toggle('light',isLight);
+  document.getElementById('mode-label').textContent=isLight?'Light':'Dark';
+  localStorage.setItem(THEME_KEY,isLight?'light':'dark');
+}
+(function initTheme(){
+  const saved=localStorage.getItem(THEME_KEY);
+  if(saved==='light'){
+    document.body.classList.add('light');
+    document.getElementById('mode-toggle').checked=true;
+    document.getElementById('mode-label').textContent='Light';
+  }
+})();
+
+// ═══════════════════════════════════════
+// SCREEN MANAGEMENT
+// ═══════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ═══════════════════════════════════════
+// PATIENT DB
+// ═══════════════════════════════════════
+function getPatients(){try{return JSON.parse(localStorage.getItem(DB_KEY_PATIENTS)||'{}');}catch(e){return {};}}
+function savePatients(db){localStorage.setItem(DB_KEY_PATIENTS,JSON.stringify(db));}
+
+function generateID(){
+  const n = Object.keys(getPatients()).length + 1;
+  return 'RDR-' + String(n).padStart(4,'0');
+}
+
+// ═══════════════════════════════════════
+// TAB SWITCH
+// ═══════════════════════════════════════
+function switchTab(tab){
+  const idx = {new:0, existing:1, demo:2}[tab];
+  document.querySelectorAll('.login-tab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  document.getElementById('tab-new').classList.toggle('active',tab==='new');
+  document.getElementById('tab-existing').classList.toggle('active',tab==='existing');
+  document.getElementById('tab-demo').classList.toggle('active',tab==='demo');
+}
+
+// ═══════════════════════════════════════
+// LOAD DEMO CASE
+// ═══════════════════════════════════════
+const DEMO_DATA = {
+  low: {
+    name:'Demo — Stable Patient', age:28, rank:'Sepoy (Demo)',
+    hours:{
+      0:{HR:72,MAP:92,SBP:122,Temp:36.8,O2Sat:98,Lactate:1.1,Creatinine:0.9,Platelets:230},
+      1:{HR:74,MAP:90,SBP:120,Temp:36.9,O2Sat:97,Lactate:1.2,Creatinine:0.9,Platelets:228},
+      2:{HR:71,MAP:91,SBP:118,Temp:37.0,O2Sat:98,Lactate:1.1,Creatinine:1.0,Platelets:232},
+      3:{HR:73,MAP:93,SBP:121,Temp:36.9,O2Sat:98,Lactate:1.0,Creatinine:0.9,Platelets:229},
+      4:{HR:75,MAP:91,SBP:119,Temp:36.8,O2Sat:97,Lactate:1.2,Creatinine:0.9,Platelets:231},
+      5:{HR:72,MAP:90,SBP:120,Temp:37.0,O2Sat:98,Lactate:1.1,Creatinine:1.0,Platelets:227},
+    }
+  },
+  medium: {
+    name:'Demo — At-Risk Patient', age:34, rank:'Naik (Demo)',
+    hours:{
+      0:{HR:92,MAP:78,SBP:108,Temp:38.1,O2Sat:95,Lactate:2.1,Creatinine:1.4,Platelets:175},
+      1:{HR:96,MAP:76,SBP:105,Temp:38.3,O2Sat:94,Lactate:2.3,Creatinine:1.5,Platelets:170},
+      2:{HR:98,MAP:74,SBP:104,Temp:38.5,O2Sat:94,Lactate:2.5,Creatinine:1.6,Platelets:165},
+      3:{HR:100,MAP:73,SBP:101,Temp:38.4,O2Sat:93,Lactate:2.6,Creatinine:1.7,Platelets:160},
+      4:{HR:103,MAP:71,SBP:100,Temp:38.6,O2Sat:93,Lactate:2.8,Creatinine:1.8,Platelets:155},
+      5:{HR:105,MAP:70,SBP:98, Temp:38.7,O2Sat:92,Lactate:3.0,Creatinine:1.9,Platelets:150},
+    }
+  },
+  high: {
+    name:'Demo — Critical Patient', age:22, rank:'Rifleman (Demo)',
+    hours:{
+      0:{HR:112,MAP:68,SBP:95,Temp:39.0,O2Sat:92,Lactate:3.8,Creatinine:2.2,Platelets:120},
+      1:{HR:116,MAP:65,SBP:91,Temp:39.2,O2Sat:90,Lactate:4.2,Creatinine:2.5,Platelets:110},
+      2:{HR:120,MAP:62,SBP:88,Temp:39.4,O2Sat:89,Lactate:4.6,Creatinine:2.8,Platelets:100},
+      3:{HR:124,MAP:58,SBP:84,Temp:39.5,O2Sat:88,Lactate:5.0,Creatinine:3.1,Platelets:90},
+      4:{HR:128,MAP:55,SBP:80,Temp:39.6,O2Sat:87,Lactate:5.5,Creatinine:3.4,Platelets:80},
+      5:{HR:132,MAP:52,SBP:76,Temp:39.7,O2Sat:85,Lactate:6.0,Creatinine:3.8,Platelets:72},
+    }
+  }
+};
+
+async function loadDemoCase(type){
+  const demo = DEMO_DATA[type];
+  const id   = 'DEMO-' + type.toUpperCase();
+  const db   = getPatients();
+
+  // Create or overwrite demo patient
+  db[id] = { id, name: demo.name, age: demo.age, rank: demo.rank,
+              createdAt: new Date().toISOString(), hours: {...demo.hours} };
+  savePatients(db);
+  loadPatientEntry(db[id]);
+}
+
+// ═══════════════════════════════════════
+// REGISTER NEW PATIENT
+// ═══════════════════════════════════════
+function registerPatient(){
+  const name = document.getElementById('new-name').value.trim();
+  const age  = document.getElementById('new-age').value.trim();
+  const rank = document.getElementById('new-rank').value.trim();
+  const err  = document.getElementById('new-err');
+  if(!name){err.textContent='Name is required.';return;}
+  if(!age || isNaN(age) || age<1 || age>120){err.textContent='Valid age is required.';return;}
+  err.textContent='';
+
+  const id = generateID();
+  const db = getPatients();
+  db[id] = {
+    id, name, age: parseInt(age), rank,
+    createdAt: new Date().toISOString(),
+    hours: {} // hourly vitals stored here
+  };
+  savePatients(db);
+  loadPatientEntry(db[id]);
+}
+
+// ═══════════════════════════════════════
+// RESUME EXISTING PATIENT
+// ═══════════════════════════════════════
+function resumePatient(){
+  const id  = document.getElementById('ex-id').value.trim().toUpperCase();
+  const err = document.getElementById('ex-err');
+  const db  = getPatients();
+  if(!id){err.textContent='Please enter a Patient ID.';return;}
+  if(!db[id]){err.textContent=`Patient ID "${id}" not found.`;return;}
+  err.textContent='';
+  loadPatientEntry(db[id]);
+}
+
+// ═══════════════════════════════════════
+// LOAD ENTRY SCREEN
+// ═══════════════════════════════════════
+function loadPatientEntry(patient){
+  currentPatient = patient;
+  currentHour    = 0;
+
+  // Find first unfilled hour
+  for(let i=0;i<6;i++){
+    if(!patient.hours[i]){currentHour=i;break;}
+    if(i===5) currentHour=5;
+  }
+
+  // Sidebar info
+  document.getElementById('ep-id').textContent   = patient.id;
+  document.getElementById('ep-name').textContent = patient.name;
+  document.getElementById('ep-meta').textContent = `Age ${patient.age}${patient.rank ? ' · '+patient.rank : ''}`;
+
+  buildHourSteps();
+  buildVitalsGrid();
+  goHour(currentHour);
+  showScreen('screen-entry');
+  showToast(`Session loaded — ${patient.id}`);
+}
+
+// ═══════════════════════════════════════
+// BUILD HOUR STEPS SIDEBAR
+// ═══════════════════════════════════════
+function buildHourSteps(){
+  const el = document.getElementById('hour-steps');
+  el.innerHTML = HOUR_LABELS.map((lbl,i)=>`
+    <div class="hour-step ${currentPatient.hours[i]?'done':''}" id="step-${i}" onclick="goHour(${i})">
+      <div class="step-dot">${i+1}</div>
+      <div class="step-label">${lbl}</div>
+      <div class="step-check">✓</div>
+    </div>`).join('');
+}
+
+function updateSteps(){
+  for(let i=0;i<6;i++){
+    const el=document.getElementById(`step-${i}`);
+    if(!el)continue;
+    el.className='hour-step'+(currentPatient.hours[i]?' done':'')+(i===currentHour?' active':'');
+  }
+  // Analyze button
+  const allDone = Object.keys(currentPatient.hours).length === 6;
+  document.getElementById('analyze-btn').disabled = !allDone;
+  document.getElementById('analyze-hint').textContent = allDone
+    ? 'All 6 hours recorded. Ready.'
+    : `${6-Object.keys(currentPatient.hours).length} hour(s) remaining`;
+}
+
+// ═══════════════════════════════════════
+// BUILD VITALS GRID
+// ═══════════════════════════════════════
+function buildVitalsGrid(){
+  const el = document.getElementById('vitals-grid');
+  el.innerHTML = VITALS_DEF.map(v=>`
+    <div class="vital-card">
+      <div class="vital-card-name">${v.label}</div>
+      <div class="vital-card-unit">${v.unit}</div>
+      <input class="vital-card-input" type="number" step="0.1"
+        id="vi-${v.key}" placeholder="—"
+        onchange="markFilled('vi-${v.key}')">
+      <div class="vital-ref">Normal: ${v.ref}</div>
+    </div>`).join('');
+}
+
+function markFilled(id){
+  const el=document.getElementById(id);
+  el.classList.toggle('filled',el.value!=='');
+}
+
+// ═══════════════════════════════════════
+// NAVIGATE HOURS
+// ═══════════════════════════════════════
+function goHour(h){
+  if(h<0||h>5)return;
+  currentHour = h;
+
+  // Load saved values for this hour
+  const saved = currentPatient.hours[h] || {};
+  VITALS_DEF.forEach(v=>{
+    const el = document.getElementById(`vi-${v.key}`);
+    if(!el)return;
+    el.value = saved[v.key] !== undefined ? saved[v.key] : '';
+    el.classList.toggle('filled', el.value !== '');
+  });
+
+  document.getElementById('entry-hour-label').textContent = `Hour ${h+1} of 6`;
+  document.getElementById('entry-hour-sub').textContent   = `${HOUR_LABELS[h]} — ${h===0?'Earliest reading':h===5?'Most recent reading':'Intermediate reading'}`;
+  document.getElementById('btn-prev').disabled = h === 0;
+  document.getElementById('btn-next').disabled = h === 5;
+  updateSteps();
+}
+
+// ═══════════════════════════════════════
+// SAVE HOUR
+// ═══════════════════════════════════════
+function saveHour(){
+  const hourData = {};
+  let filled = 0;
+  VITALS_DEF.forEach(v=>{
+    const el  = document.getElementById(`vi-${v.key}`);
+    const val = parseFloat(el.value);
+    if(!isNaN(val)){hourData[v.key]=val;filled++;}
+  });
+  if(filled < VITALS_DEF.length){
+    showToast('Fill all vitals before saving this hour.');return;
+  }
+  currentPatient.hours[currentHour] = hourData;
+
+  // persist to localStorage
+  const db = getPatients();
+  db[currentPatient.id] = currentPatient;
+  savePatients(db);
+
+  updateSteps();
+  showToast(`Hour ${currentHour+1} saved (${HOUR_LABELS[currentHour]})`);
+
+  // Auto-advance
+  if(currentHour < 5) goHour(currentHour+1);
+}
+
+// ═══════════════════════════════════════
+// RUN ANALYSIS
+// ═══════════════════════════════════════
+async function runAnalysis(){
+  const btn = document.getElementById('analyze-btn');
+  btn.textContent='Analyzing…';btn.disabled=true;
+
+  // Build vitals arrays from stored hours
+  const vitals = {};
+  VITALS_DEF.forEach(v=>{
+    vitals[v.key] = Array.from({length:6},(_,i)=>currentPatient.hours[i]?.[v.key]??0);
+  });
+
+  try{
+    const res = await fetch('/api/predict',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({vitals})
+    });
+    const data = await res.json();
+    if(!data.success)throw new Error(data.error);
+    lastResult = data;
+    saveToRecordsDB(data);
+    renderResult(data);
+    showScreen('screen-result');
+  }catch(e){
+    showToast('Analysis failed: '+e.message);
+    btn.textContent='Run Analysis';btn.disabled=false;
+  }
+}
+
+// ═══════════════════════════════════════
+// RENDER RESULT SCREEN
+// ═══════════════════════════════════════
+function renderResult(data){
+  const p = data.prediction;
+  const cls = p.label.toLowerCase();
+
+  // Patient info
+  document.getElementById('rp-id').textContent   = currentPatient.id;
+  document.getElementById('rp-name').textContent = currentPatient.name;
+  document.getElementById('rp-meta').textContent = `Age ${currentPatient.age}${currentPatient.rank?' · '+currentPatient.rank:''}`;
+
+  // Risk badge
+  document.getElementById('r-badge').textContent = p.label+' Risk';
+  document.getElementById('r-badge').className   = 'risk-badge '+cls;
+  document.getElementById('r-conf').innerHTML    = `Confidence <strong>${p.confidence}%</strong>`;
+  const notes={
+    'Low':'Patient vitals are within acceptable ranges. Continue standard monitoring protocol.',
+    'Medium':'Early sepsis indicators detected. Increase monitoring frequency and consider cultures.',
+    'High':'SEPSIS ALERT — Immediate clinical intervention required. Initiate sepsis bundle and arrange CASEVAC.'
+  };
+  document.getElementById('r-note').textContent = notes[p.label];
+
+  // Prob bars
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    ['Low','Medium','High'].forEach(lbl=>{
+      document.getElementById(`pf-${lbl}`).style.width=p.probabilities[lbl]+'%';
+      document.getElementById(`pp-${lbl}`).textContent=p.probabilities[lbl]+'%';
+    });
+  }));
+
+  // Feature table (sidebar)
+  const keys=['HR','MAP','SBP','Temp','O2Sat','Lactate','Creatinine','Platelets'];
+  document.getElementById('feat-tbody').innerHTML=keys.map(k=>{
+    const t=data.features.trends[k];
+    const tc=t>0.05?'trend-up':t<-0.05?'trend-dn':'trend-fl';
+    const ta=t>0.05?'↑':t<-0.05?'↓':'→';
+    return`<tr><td>${k}</td><td>${data.features.means[k]}</td><td class="${tc}">${ta} ${Math.abs(t).toFixed(2)}</td></tr>`;
+  }).join('');
+
+  // Shock index
+  const si=data.features.shock_index;
+  const sc=si<0.7?'normal':si<1.0?'warn':'danger';
+  document.getElementById('shock-val').textContent=si.toFixed(2);
+  document.getElementById('shock-val').className='shock-val '+sc;
+  document.getElementById('shock-sub').textContent=si<0.7?'Normal ( < 0.7 )':si<1.0?'Elevated ( 0.7–1.0 )':'Shock Risk ( > 1.0 )';
+
+  // Waveform buttons
+  document.getElementById('wave-btns').innerHTML=
+    ['HR','MAP','SBP','Lactate','O2Sat','Temp'].map(k=>
+      `<button class="wb${k==='HR'?' active':''}" onclick="selectWave('${k}',this)">${k}</button>`
+    ).join('');
+  selectedVital='HR';
+  drawWave();
+
+  // Hourly summary table
+  document.getElementById('hourly-tbody').innerHTML=Array.from({length:6},(_,i)=>{
+    const h=currentPatient.hours[i]||{};
+    return`<tr>
+      <td style="color:var(--text-3)">${HOUR_LABELS[i]}</td>
+      <td>${h.HR??'—'}</td><td>${h.MAP??'—'}</td>
+      <td>${h.Lactate??'—'}</td><td>${h.O2Sat??'—'}</td>
+    </tr>`;
+  }).join('');
+
+  // Re-enable analyze btn
+  document.getElementById('analyze-btn').textContent='Run Analysis';
+  document.getElementById('analyze-btn').disabled=false;
+}
+
+// ═══════════════════════════════════════
+// WAVEFORM
+// ═══════════════════════════════════════
+function selectWave(key,btn){
+  selectedVital=key;
+  document.querySelectorAll('.wb').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  drawWave();
+}
+
+function drawWave(){
+  const canvas=document.getElementById('wc');
+  if(!canvas||!currentPatient)return;
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=canvas.offsetWidth*dpr; canvas.height=canvas.offsetHeight*dpr;
+  ctx.scale(dpr,dpr);
+  const W=canvas.offsetWidth,H=canvas.offsetHeight;
+  ctx.clearRect(0,0,W,H);
+
+  const data=Array.from({length:6},(_,i)=>currentPatient.hours[i]?.[selectedVital]??null);
+  const valid=data.filter(v=>v!==null);
+  if(!valid.length)return;
+
+  const mn=Math.min(...valid),mx=Math.max(...valid),range=Math.max(mx-mn,0.1);
+  const pad=18;
+  const toX=i=>pad+(i/5)*(W-2*pad);
+  const toY=v=>H-pad-((v-mn)/range)*(H-2*pad);
+
+  ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;
+  for(let i=0;i<=5;i++){ctx.beginPath();ctx.moveTo(toX(i),0);ctx.lineTo(toX(i),H);ctx.stroke();}
+
+  const pts=data.map((v,i)=>v!==null?{x:toX(i),y:toY(v)}:null).filter(Boolean);
+  if(pts.length<2)return;
+
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'rgba(0,198,255,0.14)');
+  grad.addColorStop(1,'rgba(0,198,255,0)');
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x,H);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,H);
+  ctx.closePath();ctx.fillStyle=grad;ctx.fill();
+
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){
+    const cpx=pts[i-1].x+(pts[i].x-pts[i-1].x)/2;
+    ctx.bezierCurveTo(cpx,pts[i-1].y,cpx,pts[i].y,pts[i].x,pts[i].y);
+  }
+  ctx.strokeStyle='rgba(0,198,255,0.85)';ctx.lineWidth=1.8;
+  ctx.shadowColor='rgba(0,198,255,0.4)';ctx.shadowBlur=8;
+  ctx.stroke();ctx.shadowBlur=0;
+
+  pts.forEach((p,i)=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);
+    ctx.fillStyle='#00c6ff';ctx.shadowColor='#00c6ff';ctx.shadowBlur=6;ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(255,255,255,0.6)';
+    ctx.font='9px Space Mono,monospace';ctx.textAlign='center';
+    ctx.fillText(data.filter(v=>v!==null)[i],p.x,p.y-10);
+  });
+
+  ctx.fillStyle='rgba(68,68,68,0.9)';ctx.font='9px Space Mono,monospace';
+  HOUR_LABELS.forEach((l,i)=>ctx.fillText(l,toX(i),H-3));
+}
+window.addEventListener('resize',drawWave);
+
+// ═══════════════════════════════════════
+// SAVE TO RECORDS DB (dashboard)
+// ═══════════════════════════════════════
+function saveToRecordsDB(data){
+  const existing=JSON.parse(localStorage.getItem(DB_KEY_RECORDS)||'[]');
+  existing.push({
+    pid:       currentPatient.id+' — '+currentPatient.name,
+    time:      new Date().toLocaleString('en-IN',{hour12:false,day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}),
+    label:     data.prediction.label,
+    confidence:data.prediction.confidence,
+    hr:        data.features.means['HR'],
+    lactate:   data.features.means['Lactate'],
+    o2sat:     data.features.means['O2Sat'],
+    si:        data.features.shock_index,
+  });
+  localStorage.setItem(DB_KEY_RECORDS,JSON.stringify(existing));
+}
+
+// ═══════════════════════════════════════
+// BACK
+// ═══════════════════════════════════════
+function goBack(){showScreen('screen-login');}
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+</script>
+</body>
+</html>

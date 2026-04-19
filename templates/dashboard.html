@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rudransh — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#000;--bg-1:#0a0a0a;--bg-2:#111;--bg-3:#1a1a1a;
+  --border:#222;--border-hi:#333;
+  --text-1:#fff;--text-2:#888;--text-3:#444;
+  --accent:#00c6ff;--green:#00e676;--yellow:#ffab40;--red:#ff4757;
+  --font-head:'Syne',sans-serif;--font-mono:'Space Mono',monospace;
+  --header-bg:rgba(0,0,0,0.9);
+}
+body.light{
+  --black:#f5f5f3;--bg-1:#ebebea;--bg-2:#e0e0de;--bg-3:#d5d5d3;
+  --border:#ccc;--border-hi:#aaa;
+  --text-1:#0a0a0a;--text-2:#555;--text-3:#999;
+  --accent:#0077cc;--green:#1a9e52;--yellow:#c47a00;--red:#d0323f;
+  --header-bg:rgba(245,245,243,0.92);
+}
+body.light .hero-title .hi{color:var(--accent);}
+body.light .hero-title .dim{color:var(--text-3);}
+body.light .tag.y{border-color:rgba(196,122,0,0.35);color:var(--yellow);}
+body.light .tag.a{border-color:rgba(0,119,204,0.35);color:var(--accent);}
+body.light .tag.g{border-color:rgba(26,158,82,0.35);color:var(--green);}
+
+/* TOGGLE */
+.header-right{display:flex;align-items:center;gap:14px;}
+.header-clock{font-family:var(--font-mono);font-size:0.63rem;color:var(--text-3);}
+.toggle-wrap{display:flex;align-items:center;gap:8px;}
+.toggle-label{font-family:var(--font-mono);font-size:0.56rem;letter-spacing:0.1em;color:var(--text-3);text-transform:uppercase;user-select:none;}
+.toggle{position:relative;width:40px;height:22px;cursor:pointer;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{position:absolute;inset:0;background:var(--bg-3);border:1px solid var(--border);border-radius:11px;transition:all 0.3s;}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:14px;height:14px;background:var(--text-3);border-radius:50%;transition:all 0.3s;}
+.toggle input:checked~.toggle-track{background:var(--accent);border-color:var(--accent);}
+.toggle input:checked~.toggle-thumb{transform:translateX(18px);background:#fff;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--black);color:var(--text-1);font-family:var(--font-head);min-height:100vh;overflow-x:hidden;}
+
+.reveal{opacity:0;transform:translateY(28px);transition:opacity 0.9s cubic-bezier(0.4,0,0.2,1),transform 0.9s cubic-bezier(0.4,0,0.2,1);}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.d1{transition-delay:0.12s;}.d2{transition-delay:0.24s;}
+
+header{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:var(--header-bg);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+.logo-text{font-weight:800;font-size:1.05rem;letter-spacing:0.1em;color:var(--text-1);text-transform:uppercase;text-decoration:none;}
+.logo-text span{color:var(--accent);}
+.nav-links{display:flex;gap:2px;}
+.nav-link{padding:6px 16px;font-family:var(--font-mono);font-size:0.68rem;color:var(--text-3);text-decoration:none;transition:all 0.2s;letter-spacing:0.05em;border:1px solid transparent;border-radius:3px;}
+.nav-link:hover{color:var(--text-1);border-color:var(--border);}
+.nav-link.active{color:var(--accent);border-color:var(--border-hi);background:rgba(0,198,255,0.05);}
+.header-clock{font-family:var(--font-mono);font-size:0.63rem;color:var(--text-3);}
+
+.page{max-width:1100px;margin:0 auto;padding:120px 48px 100px;}
+
+/* HERO */
+.hero{padding-bottom:100px;border-bottom:1px solid var(--border);margin-bottom:100px;}
+.hero-eyebrow{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.24em;color:var(--text-3);text-transform:uppercase;margin-bottom:36px;}
+.hero-title{font-size:clamp(2.8rem,5.8vw,5rem);font-weight:800;line-height:1.05;letter-spacing:-0.03em;margin-bottom:36px;}
+.hero-title .dim{color:var(--text-3);}
+.hero-title .hi{color:var(--accent);}
+.hero-body{font-size:1rem;color:var(--text-2);line-height:1.9;max-width:560px;}
+
+/* SECTION LABEL */
+.section-label{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.24em;color:var(--text-3);text-transform:uppercase;margin-bottom:48px;display:flex;align-items:center;gap:16px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* FLOWING ROWS — used for mission, impact, navigate */
+.flow-rows{display:flex;flex-direction:column;}
+.flow-row{padding:40px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:240px 1fr;gap:72px;align-items:start;}
+.flow-row:first-child{padding-top:0;}
+.flow-row:last-child{border-bottom:none;padding-bottom:0;}
+
+.row-meta{padding-top:3px;}
+.row-num{font-family:var(--font-mono);font-size:0.58rem;color:var(--text-3);letter-spacing:0.16em;}
+.row-region{font-family:var(--font-mono);font-size:0.58rem;color:var(--text-3);letter-spacing:0.12em;text-transform:uppercase;}
+
+.row-heading{font-size:1.1rem;font-weight:700;line-height:1.4;margin-bottom:14px;color:var(--text-1);}
+.row-text{font-size:0.85rem;color:var(--text-2);line-height:1.95;}
+.row-text strong{color:var(--text-1);font-weight:600;}
+
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;}
+.tag{padding:4px 12px;border:1px solid var(--border);font-family:var(--font-mono);font-size:0.56rem;color:var(--text-3);letter-spacing:0.08em;text-transform:uppercase;}
+.tag.y{border-color:rgba(255,171,64,0.3);color:var(--yellow);}
+.tag.a{border-color:rgba(0,198,255,0.3);color:var(--accent);}
+.tag.g{border-color:rgba(0,230,118,0.3);color:var(--green);}
+
+/* SECTION SPACING */
+.section{margin-bottom:100px;}
+
+/* PATIENT DB */
+.db-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.db-count{font-family:var(--font-mono);font-size:0.62rem;color:var(--text-3);}
+.clear-btn{padding:5px 14px;border:1px solid var(--border);background:transparent;color:var(--text-3);font-family:var(--font-mono);font-size:0.58rem;cursor:pointer;letter-spacing:0.08em;text-transform:uppercase;transition:all 0.2s;}
+.clear-btn:hover{border-color:var(--red);color:var(--red);}
+.risk-table{width:100%;border-collapse:collapse;}
+.risk-table th{font-family:var(--font-mono);font-size:0.54rem;letter-spacing:0.14em;color:var(--text-3);text-transform:uppercase;padding:0 0 14px;border-bottom:1px solid var(--border);text-align:left;font-weight:400;}
+.risk-table th+th{padding-left:20px;}
+.risk-table td{font-family:var(--font-mono);font-size:0.68rem;color:var(--text-2);padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.risk-table td+td{padding-left:20px;}
+.risk-table tr:last-child td{border-bottom:none;}
+.risk-table tr:hover td{color:var(--text-1);}
+.badge{display:inline-block;padding:2px 10px;font-family:var(--font-mono);font-size:0.56rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;}
+.badge.low{color:var(--green);border:1px solid rgba(0,230,118,0.25);}
+.badge.medium{color:var(--yellow);border:1px solid rgba(255,171,64,0.25);}
+.badge.high{color:var(--red);border:1px solid rgba(255,71,87,0.25);}
+.new-badge{font-family:var(--font-mono);font-size:0.48rem;color:var(--accent);border:1px solid rgba(0,198,255,0.25);padding:1px 6px;margin-left:8px;letter-spacing:0.08em;text-transform:uppercase;}
+.empty-db{padding:56px 0;font-family:var(--font-mono);font-size:0.68rem;color:var(--text-3);line-height:2;}
+.empty-db a{color:var(--accent);text-decoration:none;}
+
+/* NAVIGATE ROWS */
+.nav-row{display:grid;grid-template-columns:240px 1fr auto;gap:72px;align-items:center;}
+.nav-row .row-heading{margin-bottom:6px;}
+.nav-row .row-text{font-size:0.78rem;}
+.nav-card-arrow{font-family:var(--font-mono);font-size:0.7rem;color:var(--text-3);transition:all 0.25s;flex-shrink:0;}
+.flow-row.nav:hover .row-heading{color:var(--accent);}
+.flow-row.nav:hover .nav-card-arrow{color:var(--accent);transform:translateX(5px);}
+.flow-row.nav{text-decoration:none;color:inherit;}
+
+footer{border-top:1px solid var(--border);padding:36px 0;display:flex;justify-content:space-between;align-items:center;}
+.footer-l,.footer-r{font-family:var(--font-mono);font-size:0.56rem;color:var(--text-3);line-height:1.9;}
+.footer-r{text-align:right;}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo-text" href="/">Rudransh<span>.</span></a>
+  <nav class="nav-links">
+    <a class="nav-link active" href="/">Dashboard</a>
+    <a class="nav-link" href="/predict">Predict</a>
+    <a class="nav-link" href="/map">Hospital Map</a>
+  </nav>
+  <div class="header-right">
+    <div class="header-clock" id="clock"></div>
+    <div class="toggle-wrap">
+      <span class="toggle-label" id="mode-label">Dark</span>
+      <label class="toggle">
+        <input type="checkbox" id="mode-toggle" onchange="toggleMode()">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow reveal">Sepsis Early Warning System / Indian Army</div>
+    <h1 class="hero-title reveal d1">
+      Early Detection.<br>
+      <span class="dim">Forward Fields.</span><br>
+      <span class="hi">Zero Delay.</span>
+    </h1>
+    <p class="hero-body reveal d2">
+      Rudransh is an AI-powered sepsis prediction system built for Indian Army soldiers
+      in forward field locations — Ladakh, Siachen, Arunachal — where hospital access
+      is absent and every hour decides survival.
+    </p>
+  </section>
+
+  <!-- MISSION -->
+  <section class="section">
+    <div class="section-label reveal">Mission</div>
+    <div class="flow-rows">
+      <div class="flow-row reveal">
+        <div class="row-meta"><div class="row-num">01</div></div>
+        <div>
+          <div class="row-heading">Built for soldiers who cannot wait for a hospital.</div>
+          <p class="row-text">In forward battle areas, the nearest medical facility can be <strong>200+ km away</strong>. Sepsis — if undetected — kills within hours. Rudransh uses only the equipment already present in every <strong>Regimental Aid Post</strong> — a pulse oximeter, BP cuff, and thermometer — to predict sepsis risk up to <strong>6 hours before clinical onset</strong>. This gives the Medical Officer time to initiate antibiotics, stabilize vitals, and arrange <strong>CASEVAC</strong> before the window closes.</p>
+          <div class="tags">
+            <span class="tag y">Forward RAP Deployment</span>
+            <span class="tag y">CASEVAC Decision Aid</span>
+            <span class="tag a">Siachen / Ladakh Ready</span>
+            <span class="tag g">Minimal Equipment</span>
+          </div>
+        </div>
+      </div>
+      <div class="flow-row reveal">
+        <div class="row-meta"><div class="row-num">02</div></div>
+        <div>
+          <div class="row-heading">Why field sepsis is different from ICU sepsis.</div>
+          <p class="row-text">Extreme cold suppresses early immune response, masking classic symptoms. Combat trauma opens direct infection pathways. <strong>Hypothermia, altitude hypoxia, and physical exhaustion</strong> accelerate progression from infection to septic shock faster than standard conditions. Standard clinical tools require lab infrastructure that does not exist at the forward edge. Rudransh produces risk assessments from <strong>vitals alone, in real time</strong>.</p>
+          <div class="tags">
+            <span class="tag">Hypothermia-Aware</span>
+            <span class="tag">Trauma-Induced Sepsis</span>
+            <span class="tag">Altitude Hypoxia</span>
+            <span class="tag">No Lab Required</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PATIENT DB -->
+  <section class="section">
+    <div class="section-label reveal">Recent Patient Records</div>
+    <div class="reveal">
+      <div class="db-meta">
+        <div class="db-count" id="db-count">0 records</div>
+        <button class="clear-btn" onclick="clearDB()">Clear All</button>
+      </div>
+      <table class="risk-table">
+        <thead>
+          <tr>
+            <th>Patient Name</th><th>Timestamp</th><th>HR Mean</th>
+            <th>Lactate</th><th>O2 Sat</th><th>Shock Index</th>
+            <th>Confidence</th><th>Risk</th>
+          </tr>
+        </thead>
+        <tbody id="patient-db-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- IMPACT -->
+  <section class="section">
+    <div class="section-label reveal">Impact</div>
+    <div class="flow-rows">
+      <div class="flow-row reveal">
+        <div class="row-meta"><div class="row-region">Global</div></div>
+        <div>
+          <div class="row-heading">Sepsis is the world's leading cause of preventable death.</div>
+          <p class="row-text">Over <strong>49 million cases annually</strong>, responsible for 11 million deaths — 1 in every 5 deaths worldwide. The majority occur in low-resource settings where early detection infrastructure does not exist.</p>
+        </div>
+      </div>
+      <div class="flow-row reveal">
+        <div class="row-meta"><div class="row-region">India</div></div>
+        <div>
+          <div class="row-heading">South Asia's highest sepsis burden — largely unmonitored.</div>
+          <p class="row-text">India records <strong>11.3 million sepsis cases per year</strong> with 3.3 million deaths. Between 30–50% of all ICU admissions develop sepsis, with mortality reaching <strong>50–70%</strong> in resource-limited settings — precisely the conditions faced at forward military posts.</p>
+        </div>
+      </div>
+      <div class="flow-row reveal">
+        <div class="row-meta"><div class="row-region">Forward Fields</div></div>
+        <div>
+          <div class="row-heading">Where the system matters most — and least exists.</div>
+          <p class="row-text">At Siachen, Ladakh, and Arunachal, soldiers operate above 5,000m with no ICU within reach. Sepsis from combat trauma or frostbite progresses rapidly. <strong>Rudransh gives the MO a 6-hour window</strong> to act — using only vitals already being monitored at the RAP. Every hour of delayed treatment increases mortality by approximately <strong>7%</strong>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NAVIGATE -->
+  <section class="section">
+    <div class="section-label reveal">Navigate</div>
+    <div class="flow-rows reveal">
+      <a class="flow-row nav" href="/predict">
+        <div class="row-meta"></div>
+        <div>
+          <div class="row-heading">Run Sepsis Prediction</div>
+          <p class="row-text">Enter 6-hour patient vitals and receive a risk classification with confidence scores and feature breakdown.</p>
+        </div>
+        <div class="nav-card-arrow">→</div>
+      </a>
+      <a class="flow-row nav" href="/map">
+        <div class="row-meta"></div>
+        <div>
+          <div class="row-heading">Find Nearby Hospitals</div>
+          <p class="row-text">Locate hospitals within a 10km radius. Select any result to open turn-by-turn directions.</p>
+        </div>
+        <div class="nav-card-arrow">→</div>
+      </a>
+    </div>
+  </section>
+
+  <footer class="reveal">
+    <div class="footer-l">Rudransh — Sepsis Early Warning System<br>PhysioNet 2019 · Indian Army Medical Corps</div>
+    <div class="footer-r">Forward Field Deployment<br>CASEVAC Decision Support</div>
+  </footer>
+
+</div>
+
+<script>
+function clock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});}
+setInterval(clock,1000);clock();
+
+// THEME TOGGLE
+const THEME_KEY='rudransh_theme';
+function toggleMode(){
+  const isLight=document.getElementById('mode-toggle').checked;
+  document.body.classList.toggle('light',isLight);
+  document.getElementById('mode-label').textContent=isLight?'Light':'Dark';
+  localStorage.setItem(THEME_KEY,isLight?'light':'dark');
+}
+(function initTheme(){
+  const saved=localStorage.getItem(THEME_KEY);
+  if(saved==='light'){
+    document.body.classList.add('light');
+    document.getElementById('mode-toggle').checked=true;
+    document.getElementById('mode-label').textContent='Light';
+  }
+})();
+
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});
+},{threshold:0.06,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+const DB_KEY='sepsisalert_patients';
+function getDB(){try{return JSON.parse(localStorage.getItem(DB_KEY)||'[]');}catch(e){return[];}}
+
+function renderDB(){
+  const all=getDB();
+  const records=[...all].reverse().slice(0,10);
+  document.getElementById('db-count').textContent=`${all.length} record${all.length!==1?'s':''}`;
+  const tbody=document.getElementById('patient-db-body');
+  if(!records.length){
+    tbody.innerHTML=`<tr><td colspan="8" class="empty-db">No records yet — run a prediction from the <a href="/predict">Predict page</a> to populate this table.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML=records.map((r,i)=>`<tr>
+    <td style="color:#fff;font-weight:700">${r.pid}${i===0?'<span class="new-badge">New</span>':''}</td>
+    <td>${r.time}</td><td>${r.hr} bpm</td><td>${r.lactate} mmol/L</td>
+    <td>${r.o2sat}%</td><td>${r.si}</td>
+    <td style="color:var(--accent)">${r.confidence}%</td>
+    <td><span class="badge ${r.label.toLowerCase()}">${r.label}</span></td>
+  </tr>`).join('');
+}
+
+function clearDB(){
+  if(confirm('Clear all patient records?')){localStorage.removeItem(DB_KEY);renderDB();}
+}
+
+renderDB();
+setInterval(renderDB,5000);
+</script>
+</body>
+</html>
