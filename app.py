@@ -6,6 +6,8 @@ Routes: / (dashboard), /predict (prediction page), /map (hospital finder)
 from flask import Flask, request, jsonify, render_template
 import pickle, json, os
 import numpy as np
+from urllib import parse, request as urlrequest
+from urllib.error import HTTPError, URLError
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
@@ -89,6 +91,46 @@ def api_predict():
 @app.route('/api/metrics')
 def api_metrics():
     return jsonify(metrics)
+
+@app.route('/api/hospitals')
+def api_hospitals():
+    try:
+        lat = float(request.args.get('lat', ''))
+        lng = float(request.args.get('lng', ''))
+    except ValueError:
+        return jsonify({'success': False, 'error': 'Invalid coordinates'}), 400
+
+    query = (
+        f'[out:json][timeout:25];('
+        f'node["amenity"="hospital"](around:10000,{lat},{lng});'
+        f'way["amenity"="hospital"](around:10000,{lat},{lng});'
+        f'node["amenity"="clinic"](around:10000,{lat},{lng});'
+        f'way["amenity"="clinic"](around:10000,{lat},{lng});'
+        f'node["healthcare"="hospital"](around:10000,{lat},{lng});'
+        f'way["healthcare"="hospital"](around:10000,{lat},{lng});'
+        f');out center;'
+    )
+    payload = parse.urlencode({'data': query}).encode('utf-8')
+    req = urlrequest.Request(
+        'https://overpass-api.de/api/interpreter',
+        data=payload,
+        headers={
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'Rudransh-Sepsis-EWS/1.0',
+        },
+        method='POST',
+    )
+
+    try:
+        with urlrequest.urlopen(req, timeout=30) as response:
+            data = json.loads(response.read().decode('utf-8'))
+        return jsonify({'success': True, 'elements': data.get('elements', [])})
+    except HTTPError as e:
+        return jsonify({'success': False, 'error': f'Overpass HTTP {e.code}'}), 502
+    except URLError as e:
+        return jsonify({'success': False, 'error': f'Network error: {e.reason}'}), 502
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 502
 
 @app.route('/api/demo_case/<case_type>')
 def demo_case(case_type):

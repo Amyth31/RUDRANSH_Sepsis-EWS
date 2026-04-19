@@ -265,10 +265,10 @@ function locateMe(){
 async function fetchHospitals(lat,lng){
   const dot=document.getElementById('s-dot');
   const txt=document.getElementById('status-text');
-  const q=`[out:json][timeout:25];(node["amenity"="hospital"](around:10000,${lat},${lng});way["amenity"="hospital"](around:10000,${lat},${lng});node["amenity"="clinic"](around:10000,${lat},${lng});node["healthcare"="hospital"](around:10000,${lat},${lng}););out center;`;
   try{
-    const res=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q)});
+    const res=await fetch(`/api/hospitals?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`);
     const data=await res.json();
+    if(!res.ok || !data.success) throw new Error(data.error || 'Hospital lookup failed');
     hospitalMarkers.forEach(m=>map.removeLayer(m));
     hospitalMarkers=[];allHospitals=[];
     const els=data.elements||[];
