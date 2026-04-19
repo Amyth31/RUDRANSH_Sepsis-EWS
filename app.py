@@ -27,6 +27,11 @@ with open(os.path.join(MODEL_DIR, 'metrics.json')) as f:
 
 RISK_LABELS = {0: 'Low', 1: 'Medium', 2: 'High'}
 RISK_COLORS = {0: '#22c55e', 1: '#f59e0b', 2: '#ef4444'}
+OVERPASS_ENDPOINTS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.private.coffee/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+]
 
 def compute_features(vitals_6h):
     keys = ['HR','MAP','SBP','Temp','O2Sat','Lactate','Creatinine','Platelets']
@@ -111,26 +116,38 @@ def api_hospitals():
         f');out center;'
     )
     payload = parse.urlencode({'data': query}).encode('utf-8')
-    req = urlrequest.Request(
-        'https://overpass-api.de/api/interpreter',
-        data=payload,
-        headers={
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'User-Agent': 'Rudransh-Sepsis-EWS/1.0',
-        },
-        method='POST',
-    )
+    errors = []
+    for endpoint in OVERPASS_ENDPOINTS:
+        req = urlrequest.Request(
+            endpoint,
+            data=payload,
+            headers={
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'User-Agent': 'Rudransh-Sepsis-EWS/1.0',
+            },
+            method='POST',
+        )
 
-    try:
-        with urlrequest.urlopen(req, timeout=30) as response:
-            data = json.loads(response.read().decode('utf-8'))
-        return jsonify({'success': True, 'elements': data.get('elements', [])})
-    except HTTPError as e:
-        return jsonify({'success': False, 'error': f'Overpass HTTP {e.code}'}), 502
-    except URLError as e:
-        return jsonify({'success': False, 'error': f'Network error: {e.reason}'}), 502
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 502
+        try:
+            with urlrequest.urlopen(req, timeout=30) as response:
+                data = json.loads(response.read().decode('utf-8'))
+            return jsonify({
+                'success': True,
+                'elements': data.get('elements', []),
+                'source': endpoint,
+            })
+        except HTTPError as e:
+            errors.append(f'{endpoint}: HTTP {e.code}')
+        except URLError as e:
+            errors.append(f'{endpoint}: {e.reason}')
+        except Exception as e:
+            errors.append(f'{endpoint}: {str(e)}')
+
+    return jsonify({
+        'success': False,
+        'error': 'All hospital data providers failed',
+        'detail': errors,
+    }), 502
 
 @app.route('/api/demo_case/<case_type>')
 def demo_case(case_type):
