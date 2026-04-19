@@ -278,11 +278,12 @@ async function fetchHospitals(lat,lng){
       return;
     }
     els.forEach((el,i)=>{
-      const eLat=el.lat||el.center?.lat,eLng=el.lon||el.center?.lon;
+      const eLat=el.lat || (el.center && el.center.lat), eLng=el.lon || (el.center && el.center.lon);
       if(!eLat||!eLng)return;
-      const name=el.tags?.name||el.tags?.['name:en']||'Hospital';
-      const amenity=el.tags?.amenity||'hospital';
-      const addr=[el.tags?.['addr:street'],el.tags?.['addr:city'],el.tags?.['addr:state']].filter(Boolean).join(', ')||'Address unavailable';
+      const tags=el.tags || {};
+      const name=tags.name || tags['name:en'] || 'Hospital';
+      const amenity=tags.amenity || 'hospital';
+      const addr=[tags['addr:street'], tags['addr:city'], tags['addr:state']].filter(Boolean).join(', ') || 'Address unavailable';
       const dist=haversine(lat,lng,eLat,eLng);
       const hosp={i,name,amenity,addr,lat:eLat,lng:eLng,dist};
       allHospitals.push(hosp);

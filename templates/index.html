@@ -687,7 +687,10 @@ async function runAnalysis(){
   // Build vitals arrays from stored hours
   const vitals = {};
   VITALS_DEF.forEach(v=>{
-    vitals[v.key] = Array.from({length:6},(_,i)=>currentPatient.hours[i]?.[v.key]??0);
+    vitals[v.key] = Array.from({length:6}, function(_, i){
+      const hour = currentPatient.hours[i];
+      return hour && hour[v.key] !== undefined ? hour[v.key] : 0;
+    });
   });
 
   try{
@@ -767,8 +770,8 @@ function renderResult(data){
     const h=currentPatient.hours[i]||{};
     return`<tr>
       <td style="color:var(--text-3)">${HOUR_LABELS[i]}</td>
-      <td>${h.HR??'—'}</td><td>${h.MAP??'—'}</td>
-      <td>${h.Lactate??'—'}</td><td>${h.O2Sat??'—'}</td>
+      <td>${h.HR !== undefined ? h.HR : '—'}</td><td>${h.MAP !== undefined ? h.MAP : '—'}</td>
+      <td>${h.Lactate !== undefined ? h.Lactate : '—'}</td><td>${h.O2Sat !== undefined ? h.O2Sat : '—'}</td>
     </tr>`;
   }).join('');
 
@@ -797,7 +800,10 @@ function drawWave(){
   const W=canvas.offsetWidth,H=canvas.offsetHeight;
   ctx.clearRect(0,0,W,H);
 
-  const data=Array.from({length:6},(_,i)=>currentPatient.hours[i]?.[selectedVital]??null);
+  const data=Array.from({length:6}, function(_, i){
+    const hour = currentPatient.hours[i];
+    return hour && hour[selectedVital] !== undefined ? hour[selectedVital] : null;
+  });
   const valid=data.filter(v=>v!==null);
   if(!valid.length)return;
 
