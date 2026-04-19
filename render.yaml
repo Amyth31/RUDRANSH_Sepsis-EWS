@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: rudransh
+    name: rudransh-ews
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
