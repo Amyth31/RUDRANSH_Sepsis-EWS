@@ -201,6 +201,45 @@ canvas#wc{width:100%;height:110px;display:block;}
 .toast.show{transform:translateY(0);opacity:1;}
 .demo-case-btn{width:100%;padding:14px 16px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-1);font-family:var(--font-head);text-align:left;cursor:pointer;transition:all 0.2s;}
 .demo-case-btn:hover{border-color:var(--border-hi);background:var(--bg-3);}
+
+@media (max-width:768px){
+  html,body{height:auto;min-height:100%;}
+  body{overflow-y:auto;display:block;}
+  header{height:auto;min-height:58px;padding:12px 18px;gap:10px;align-items:flex-start;flex-wrap:wrap;position:sticky;top:0;}
+  .logo-text{font-size:0.9rem;}
+  .nav-links{order:3;width:100%;overflow-x:auto;padding-top:4px;}
+  .nav-link{padding:6px 10px;font-size:0.58rem;white-space:nowrap;}
+  .header-right{margin-left:auto;gap:8px;}
+  .header-clock{display:none;}
+  .toggle-label{font-size:0.5rem;}
+  .screen{min-height:calc(100vh - 92px);overflow:visible;}
+  .screen.active{display:flex;}
+  #screen-login{align-items:flex-start;padding:18px 0;}
+  .login-box{width:100%;padding:28px 20px;}
+  .login-tabs{overflow-x:auto;}
+  .login-tab{padding:10px 14px;white-space:nowrap;}
+  .field-row{grid-template-columns:1fr;}
+  #screen-entry,#screen-result{flex-direction:column;}
+  .entry-sidebar,.result-sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);overflow:visible;}
+  .entry-sidebar-top{padding:18px 20px;}
+  .hour-steps{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;padding:12px;max-height:none;overflow:visible;}
+  .hour-step{margin-bottom:0;padding:10px;}
+  .entry-sidebar-bottom{padding:14px 20px;}
+  .entry-main,.result-main{overflow:visible;}
+  .entry-top{padding:18px 20px;align-items:flex-start;flex-direction:column;gap:12px;}
+  .entry-form{padding:18px 20px;overflow:visible;}
+  .vitals-grid{grid-template-columns:1fr 1fr;gap:12px;}
+  .vital-card{padding:13px;}
+  .result-sidebar{padding:22px 20px;}
+  .risk-hero{padding:28px 20px;}
+  .risk-badge{font-size:2rem;}
+  .prob-section{padding:22px 20px;}
+  .prob-row{gap:10px;}
+  .result-bottom{display:block;overflow:visible;}
+  .result-panel{border-right:none;border-bottom:1px solid var(--border);overflow-x:auto;padding:20px;}
+  canvas#wc{height:140px;}
+  .toast{left:20px;right:20px;bottom:16px;}
+}
 </style>
 </head>
 <body>
