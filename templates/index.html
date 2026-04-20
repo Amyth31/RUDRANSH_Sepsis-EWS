@@ -704,6 +704,7 @@ async function runAnalysis(){
     saveToRecordsDB(data);
     renderResult(data);
     showScreen('screen-result');
+    requestAnimationFrame(()=>requestAnimationFrame(drawWave));
   }catch(e){
     showToast('Analysis failed: '+e.message);
     btn.textContent='Run Analysis';btn.disabled=false;
@@ -763,7 +764,6 @@ function renderResult(data){
       `<button class="wb${k==='HR'?' active':''}" onclick="selectWave('${k}',this)">${k}</button>`
     ).join('');
   selectedVital='HR';
-  drawWave();
 
   // Hourly summary table
   document.getElementById('hourly-tbody').innerHTML=Array.from({length:6},(_,i)=>{
@@ -795,6 +795,7 @@ function drawWave(){
   if(!canvas||!currentPatient)return;
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
+  if(!canvas.offsetWidth||!canvas.offsetHeight)return;
   canvas.width=canvas.offsetWidth*dpr; canvas.height=canvas.offsetHeight*dpr;
   ctx.scale(dpr,dpr);
   const W=canvas.offsetWidth,H=canvas.offsetHeight;
