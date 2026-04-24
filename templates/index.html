@@ -36,6 +36,14 @@ body.light{
 html,body{height:100%;}
 body{background:var(--black);color:var(--text-1);font-family:var(--font-head);display:flex;flex-direction:column;overflow:hidden;}
 
+@media (min-width:769px){
+  body{
+    zoom:1.5;
+    width:66.6667%;
+    min-height:66.6667vh;
+  }
+}
+
 /* HEADER */
 header{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:var(--header-bg);border-bottom:1px solid var(--border);flex-shrink:0;z-index:100;}
 .logo-text{font-weight:800;font-size:1.05rem;letter-spacing:0.1em;color:var(--text-1);text-transform:uppercase;text-decoration:none;}
