@@ -61,7 +61,8 @@ header{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;
 /* HERO */
 .hero{padding-bottom:100px;border-bottom:1px solid var(--border);margin-bottom:100px;}
 .hero-eyebrow{font-family:var(--font-mono);font-size:0.6rem;letter-spacing:0.24em;color:var(--text-3);text-transform:uppercase;margin-bottom:36px;}
-.hero-title{font-size:clamp(3.8rem,8.2vw,7.3rem);font-weight:800;line-height:1.03;letter-spacing:-0.04em;margin-bottom:42px;}
+.hero-title{font-size:clamp(3.4rem,7.2vw,6.5rem);font-weight:800;line-height:1.03;letter-spacing:-0.04em;margin-bottom:42px;}
+.hero-title .line{display:block;white-space:nowrap;}
 .hero-title .dim{color:var(--text-3);}
 .hero-title .hi{color:var(--accent);}
 .hero-body{font-size:1.22rem;color:var(--text-2);line-height:1.85;max-width:840px;}
@@ -138,6 +139,7 @@ footer{border-top:1px solid var(--border);padding:36px 0;display:flex;justify-co
   .hero{padding-bottom:56px;margin-bottom:64px;}
   .hero-eyebrow{font-size:0.52rem;letter-spacing:0.16em;margin-bottom:24px;}
   .hero-title{font-size:clamp(2.1rem,14vw,3.2rem);}
+  .hero-title .line{white-space:normal;}
   .hero-body{font-size:0.85rem;}
   .section{margin-bottom:64px;}
   .section-label{font-size:0.52rem;letter-spacing:0.16em;margin-bottom:28px;}
@@ -176,9 +178,9 @@ footer{border-top:1px solid var(--border);padding:36px 0;display:flex;justify-co
   <section class="hero">
     <div class="hero-eyebrow reveal">Sepsis Early Warning System / Indian Army</div>
     <h1 class="hero-title reveal d1">
-      Early Detection.<br>
-      <span class="dim">Forward Fields.</span><br>
-      <span class="hi">Zero Delay.</span>
+      <span class="line">Early Detection.</span>
+      <span class="line dim">Forward Fields.</span>
+      <span class="line hi">Zero Delay.</span>
     </h1>
     <p class="hero-body reveal d2">
       Rudransh is an AI-powered sepsis prediction system built for Indian Army soldiers
