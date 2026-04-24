@@ -36,14 +36,6 @@ body.light{
 html,body{height:100%;}
 body{background:var(--black);color:var(--text-1);font-family:var(--font-head);display:flex;flex-direction:column;overflow:hidden;}
 
-@media (min-width:769px){
-  body{
-    zoom:1.5;
-    width:66.6667%;
-    min-height:66.6667vh;
-  }
-}
-
 /* HEADER */
 header{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:var(--header-bg);border-bottom:1px solid var(--border);flex-shrink:0;z-index:100;}
 .logo-text{font-weight:800;font-size:1.05rem;letter-spacing:0.1em;color:var(--text-1);text-transform:uppercase;text-decoration:none;}
@@ -62,26 +54,26 @@ header{height:60px;display:flex;align-items:center;justify-content:space-between
    SCREEN 1 — LOGIN
 ═══════════════════════════════ */
 #screen-login{align-items:center;justify-content:center;}
-.login-box{width:440px;padding:56px;}
+.login-box{width:min(100%,760px);padding:72px 64px;}
 .login-eyebrow{font-family:var(--font-mono);font-size:0.58rem;letter-spacing:0.22em;color:var(--text-3);text-transform:uppercase;margin-bottom:28px;}
-.login-title{font-size:1.8rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px;}
-.login-sub{font-size:0.82rem;color:var(--text-2);line-height:1.7;margin-bottom:44px;}
+.login-title{font-size:2.8rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:14px;}
+.login-sub{font-size:1.12rem;color:var(--text-2);line-height:1.7;margin-bottom:56px;max-width:760px;}
 
 .login-tabs{display:flex;gap:0;margin-bottom:32px;border-bottom:1px solid var(--border);}
-.login-tab{padding:10px 20px;font-family:var(--font-mono);font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;}
+.login-tab{padding:14px 38px;font-family:var(--font-mono);font-size:0.92rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;}
 .login-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 
 .tab-panel{display:none;}
 .tab-panel.active{display:block;}
 
-.field-label{font-family:var(--font-mono);font-size:0.56rem;letter-spacing:0.16em;color:var(--text-3);text-transform:uppercase;margin-bottom:8px;}
-.field-input{width:100%;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-1);font-family:var(--font-mono);font-size:0.78rem;outline:none;transition:border-color 0.2s;margin-bottom:20px;}
+.field-label{font-family:var(--font-mono);font-size:0.76rem;letter-spacing:0.16em;color:var(--text-3);text-transform:uppercase;margin-bottom:10px;}
+.field-input{width:100%;padding:22px 18px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-1);font-family:var(--font-mono);font-size:1.18rem;outline:none;transition:border-color 0.2s;margin-bottom:28px;}
 .field-input::placeholder{color:var(--text-3);}
 .field-input:focus{border-color:var(--accent);}
 
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
 
-.login-btn{width:100%;padding:13px;background:var(--accent);color:var(--black);border:none;font-family:var(--font-head);font-weight:800;font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+.login-btn{width:100%;padding:22px;background:var(--accent);color:var(--black);border:none;font-family:var(--font-head);font-weight:800;font-size:1.22rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;margin-top:10px;}
 .login-btn:hover{background:#33d1ff;}
 .login-err{font-family:var(--font-mono);font-size:0.62rem;color:var(--red);margin-top:12px;min-height:18px;}
 
@@ -224,9 +216,14 @@ canvas#wc{width:100%;height:110px;display:block;}
   .screen.active{display:flex;}
   #screen-login{align-items:flex-start;padding:18px 0;}
   .login-box{width:100%;padding:28px 20px;}
+  .login-title{font-size:1.8rem;}
+  .login-sub{font-size:0.82rem;margin-bottom:44px;}
   .login-tabs{overflow-x:auto;}
-  .login-tab{padding:10px 14px;white-space:nowrap;}
+  .login-tab{padding:10px 14px;font-size:0.62rem;white-space:nowrap;}
   .field-row{grid-template-columns:1fr;}
+  .field-label{font-size:0.56rem;}
+  .field-input{padding:12px 14px;font-size:0.78rem;margin-bottom:20px;}
+  .login-btn{padding:13px;font-size:0.82rem;margin-top:4px;}
   #screen-entry,#screen-result{flex-direction:column;}
   .entry-sidebar,.result-sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border);overflow:visible;}
   .entry-sidebar-top{padding:18px 20px;}
